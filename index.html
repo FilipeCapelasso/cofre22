@@ -1142,18 +1142,31 @@ function renderHistory() {
     item.querySelector('.hist-del').addEventListener('click',()=>{
       history.splice(idx,1);
       localStorage.setItem('fs4_hist',JSON.stringify(history));
+      recalcAcum();
       renderHistory();
     });
     list.appendChild(item);
   });
 }
 
+function recalcAcum(){
+  acum = history.reduce((sum, h) => {
+    const inv = h.cats.find(c => c.name === (cats.find(x=>x.isInvest)||{}).name);
+    return sum + (inv ? inv.val : 0);
+  }, 0);
+  localStorage.setItem('fs4_acum', acum);
+  calc();
+}
+
 $('btn-hist-clear').addEventListener('click',()=>{
   if(!history.length) return;
   if(confirm('Limpar todo o histórico local?')){
     history=[];
+    acum=0;
     localStorage.removeItem('fs4_hist');
+    localStorage.removeItem('fs4_acum');
     renderHistory();
+    calc();
   }
 });
 
