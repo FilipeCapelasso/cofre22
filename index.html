@@ -6,178 +6,162 @@
 <title>FlowSal — Gestão de Salário</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --ink:      #0a0c12;
-  --ink2:     #111520;
-  --ink3:     #181d2b;
-  --ink4:     #1e2538;
-  --line:     #242d44;
-  --line2:    #2d3850;
-  --muted:    #5c6b8a;
-  --dim:      #8895b0;
-  --text:     #dde3f0;
-  --bright:   #f0f4ff;
-  --blue:     #4f8ef7;
-  --blue-g:   #2563d8;
-  --green:    #29d99f;
-  --green-d:  #0fa875;
-  --amber:    #f6a623;
-  --rose:     #f25c7a;
-  --violet:   #9b78f8;
-  --slate:    #6e849e;
-  --r:        16px;
-  --r2:       24px;
+:root{
+  --ink:    #08090f;
+  --ink2:   #0f1120;
+  --ink3:   #161929;
+  --ink4:   #1c2035;
+  --line:   #222840;
+  --line2:  #2a3350;
+  --muted:  #56657f;
+  --dim:    #8492aa;
+  --text:   #d8e0f0;
+  --bright: #eef2ff;
+  --blue:   #4f8ef7;
+  --blue-d: #2563d8;
+  --green:  #28d99c;
+  --amber:  #f6a623;
+  --rose:   #f25c7a;
+  --violet: #9b78f8;
+  --slate:  #6b829c;
+  --teal:   #2dd4bf;
+  --r:16px; --r2:22px;
 }
-
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
-
 html{scroll-behavior:smooth;}
-
 body{
-  background: var(--ink);
-  color: var(--text);
-  font-family: 'Bricolage Grotesque', sans-serif;
-  min-height:100vh;
-  overflow-x:hidden;
+  background:var(--ink);color:var(--text);
+  font-family:'Bricolage Grotesque',sans-serif;
+  min-height:100vh;overflow-x:hidden;
 }
 
-/* ── AMBIENT ORBS ── */
-.orb{
-  position:fixed; border-radius:50%; pointer-events:none; z-index:0;
-  filter: blur(80px); opacity:.18;
-}
-.orb-a{width:500px;height:500px;background:var(--blue);top:-180px;left:-140px;}
-.orb-b{width:400px;height:400px;background:var(--violet);bottom:-120px;right:-120px;}
-.orb-c{width:300px;height:300px;background:var(--green);bottom:200px;left:-80px;}
+/* ORBS */
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(90px);opacity:.15;}
+.orb-a{width:520px;height:520px;background:var(--blue);top:-200px;left:-160px;}
+.orb-b{width:420px;height:420px;background:var(--violet);bottom:-140px;right:-140px;}
+.orb-c{width:320px;height:320px;background:var(--green);bottom:220px;left:-100px;}
 
-/* ── LAYOUT ── */
-.shell{
-  position:relative;z-index:1;
-  max-width:480px; margin:0 auto;
-  padding: 28px 18px 72px;
-}
+.shell{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:28px 18px 80px;}
 
-/* ── HEADER ── */
-.hd{text-align:center; margin-bottom:32px; animation: rise .6s ease both;}
-
+/* HEADER */
+.hd{text-align:center;margin-bottom:30px;animation:rise .55s ease both;}
 .logo-pill{
   display:inline-flex;align-items:center;gap:7px;
-  background:rgba(79,142,247,.12);
-  border:1px solid rgba(79,142,247,.28);
-  border-radius:100px; padding:5px 14px 5px 10px;
-  font-size:12px;font-weight:600;letter-spacing:.06em;
-  color:var(--blue); text-transform:uppercase; margin-bottom:16px;
+  background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.25);
+  border-radius:100px;padding:5px 14px 5px 10px;
+  font-size:11px;font-weight:600;letter-spacing:.07em;
+  color:var(--blue);text-transform:uppercase;margin-bottom:14px;
 }
-.logo-dot{
-  width:8px;height:8px;border-radius:50%;background:var(--blue);
-  animation:pulse 2s ease-in-out infinite;
-}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
-
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.75);}}
 .hd h1{
-  font-size: clamp(1.8rem, 6vw, 2.2rem);
-  font-weight:800; letter-spacing:-.04em;
-  background: linear-gradient(145deg, #f0f4ff 0%, #a0b4e0 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  background-clip:text; line-height:1.1; margin-bottom:8px;
+  font-size:clamp(1.8rem,6vw,2.2rem);font-weight:800;letter-spacing:-.04em;
+  background:linear-gradient(150deg,#eef2ff 0%,#96aad4 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;line-height:1.1;margin-bottom:8px;
 }
 .hd p{font-size:13px;color:var(--muted);}
 
-/* ── SALARY HERO ── */
+/* SALARY HERO */
 .salary-hero{
-  background: linear-gradient(135deg, #0f1525 0%, var(--ink4) 100%);
-  border:1px solid var(--line2);
-  border-radius:var(--r2); padding:24px;
-  margin-bottom:14px; position:relative; overflow:hidden;
-  animation: rise .6s .08s ease both;
+  background:linear-gradient(135deg,#0c1222 0%,var(--ink4) 100%);
+  border:1px solid var(--line2);border-radius:var(--r2);
+  padding:22px 24px;margin-bottom:12px;
+  position:relative;overflow:hidden;animation:rise .55s .07s ease both;
 }
 .salary-hero::before{
   content:'';position:absolute;inset:0;
-  background: radial-gradient(ellipse at 80% -20%, rgba(79,142,247,.18) 0%, transparent 60%);
+  background:radial-gradient(ellipse at 85% -15%,rgba(79,142,247,.15) 0%,transparent 58%);
   pointer-events:none;
 }
 .salary-tag{
-  font-size:10px;font-weight:600;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--muted);margin-bottom:10px;
-  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:9px;font-family:'JetBrains Mono',monospace;
 }
-.salary-row{display:flex;align-items:flex-start;gap:6px;}
-.salary-cur{
-  font-family:'JetBrains Mono',monospace;
-  font-size:1.3rem;color:var(--dim);margin-top:12px;
-}
+.salary-row{display:flex;align-items:flex-start;gap:5px;}
+.salary-cur{font-family:'JetBrains Mono',monospace;font-size:1.2rem;color:var(--dim);margin-top:11px;}
 #inp-sal{
   flex:1;background:transparent;border:none;outline:none;
   font-family:'Bricolage Grotesque',sans-serif;
-  font-size:clamp(2.2rem,8vw,2.8rem);
-  font-weight:800;color:var(--bright);letter-spacing:-.03em;
-  width:100%; min-width:0;
+  font-size:clamp(2rem,8vw,2.7rem);font-weight:800;
+  color:var(--bright);letter-spacing:-.03em;width:100%;min-width:0;
 }
-.salary-sep{height:1px;background:linear-gradient(90deg,transparent,var(--line2) 30%,var(--line2) 70%,transparent);margin:18px 0 14px;}
-.salary-trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;}
+.salary-sep{height:1px;background:linear-gradient(90deg,transparent,var(--line2) 30%,var(--line2) 70%,transparent);margin:16px 0 13px;}
+.salary-trio{display:grid;grid-template-columns:1fr 1fr 1fr;}
 .strio-item{
-  text-align:center;
-  border-right:1px solid var(--line);
-  padding:0 10px;
+  text-align:center;border-right:1px solid var(--line);padding:0 8px;
 }
 .strio-item:first-child{text-align:left;padding-left:0;}
 .strio-item:last-child{border-right:none;text-align:right;padding-right:0;}
-.strio-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;}
-.strio-val{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:500;color:var(--bright);}
+.strio-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px;}
+.strio-val{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:500;color:var(--bright);}
 .strio-val.ok{color:var(--green);}
 .strio-val.bad{color:var(--rose);}
 .strio-val.pct{color:var(--blue);}
 
-/* ── DONUT PANEL ── */
-.donut-panel{
+/* PLANILHA PREVIEW */
+.sheet-preview{
   background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);
-  padding:22px; margin-bottom:14px;
-  animation: rise .6s .12s ease both;
+  padding:20px 22px;margin-bottom:12px;animation:rise .55s .1s ease both;
 }
 .panel-lbl{
-  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
-  color:var(--muted);margin-bottom:16px;
-  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.11em;
+  color:var(--muted);margin-bottom:14px;font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:8px;
 }
-.donut-row{display:flex;align-items:center;gap:20px;}
-.donut-wrap{flex-shrink:0;position:relative;width:108px;height:108px;}
+.panel-lbl::after{content:'';flex:1;height:1px;background:var(--line);}
+
+/* DONUT + LEGENDA */
+.donut-row{display:flex;align-items:center;gap:18px;}
+.donut-wrap{flex-shrink:0;position:relative;width:106px;height:106px;}
 .donut-wrap svg{transform:rotate(-90deg);}
 .donut-center{
   position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center; pointer-events:none;
+  align-items:center;justify-content:center;pointer-events:none;
 }
-.donut-pct{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--bright);}
-.donut-sub{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
-.legend{flex:1;display:flex;flex-direction:column;gap:7px;}
-.leg-row{display:flex;align-items:center;justify-content:space-between;}
-.leg-left{display:flex;align-items:center;gap:8px;}
-.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.leg-name{font-size:12px;color:var(--dim);}
-.leg-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--text);}
-.leg-row.saldo .leg-name{color:var(--muted);}
-.leg-row.saldo .leg-val{color:var(--green);}
-.leg-row.saldo .leg-val.bad{color:var(--rose);}
+.donut-pct{font-family:'JetBrains Mono',monospace;font-size:1.05rem;font-weight:700;color:var(--bright);}
+.donut-sub{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:1px;}
+.legend{flex:1;display:flex;flex-direction:column;gap:6px;}
+.leg-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);}
+.leg-row:last-child{border-bottom:none;}
+.leg-left{display:flex;align-items:center;gap:7px;}
+.leg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.leg-name{font-size:11px;color:var(--dim);}
+.leg-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--text);}
+.leg-row.restante .leg-val.ok{color:var(--green);}
+.leg-row.restante .leg-val.bad{color:var(--rose);}
 
-/* ── SECTION DIVIDER ── */
+/* COLUNAS DA PLANILHA - mini mapa */
+.sheet-cols{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:14px;
+  padding-top:12px;border-top:1px dashed var(--line);
+}
+.sheet-col{background:var(--ink3);border-radius:6px;padding:5px 3px;text-align:center;}
+.sheet-col-letter{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:2px;}
+.sheet-col-name{font-size:7px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;line-height:1.2;}
+.sheet-col-val{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;color:var(--text);}
+.sheet-col.active{border:1px solid rgba(79,142,247,.3);background:rgba(79,142,247,.06);}
+.sheet-col.active .sheet-col-letter{color:var(--blue);}
+
+/* SEC DIV */
 .sec-div{
-  display:flex;align-items:center;gap:10px;
-  margin:20px 0 12px;
+  display:flex;align-items:center;gap:10px;margin:18px 0 10px;
   font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;
   color:var(--muted);font-family:'JetBrains Mono',monospace;
 }
 .sec-div::after{content:'';flex:1;height:1px;background:var(--line);}
 
-/* ── CATEGORY CARDS ── */
+/* CAT CARDS */
 .cat{
-  background:var(--ink2);border:1px solid var(--line);
-  border-radius:var(--r); padding:18px 20px 16px;
-  margin-bottom:10px; transition: border-color .2s, transform .15s;
-  position:relative; overflow:hidden;
+  background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  padding:17px 19px 15px;margin-bottom:9px;
+  transition:border-color .2s,transform .15s;
+  position:relative;overflow:hidden;
 }
 .cat:hover{border-color:var(--line2);}
-.cat:active{transform:scale(.995);}
+.cat:active{transform:scale(.997);}
 .cat::after{
   content:'';position:absolute;left:0;top:0;bottom:0;
   width:3px;border-radius:var(--r) 0 0 var(--r);
@@ -186,151 +170,162 @@ body{
 .cat.reserva::after{background:var(--amber);}
 .cat.lazer::after{background:var(--violet);}
 .cat.carro::after{background:var(--slate);}
+.cat.restante::after{background:var(--teal);}
 
-.cat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
 .cat-meta{display:flex;align-items:center;gap:10px;}
-.cat-ico{
-  width:36px;height:36px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;font-size:17px;
-}
-.invest .cat-ico{background:rgba(41,217,159,.1);}
+.cat-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.invest .cat-ico{background:rgba(40,217,156,.1);}
 .reserva .cat-ico{background:rgba(246,166,35,.1);}
 .lazer   .cat-ico{background:rgba(155,120,248,.1);}
-.carro   .cat-ico{background:rgba(110,132,158,.1);}
-.cat-text{}
-.cat-name{font-size:.9rem;font-weight:700;color:var(--bright);line-height:1.2;}
-.cat-hint{font-size:11px;color:var(--muted);margin-top:1px;}
-.cat-pct{
-  font-family:'JetBrains Mono',monospace;
-  font-size:1rem;font-weight:700;
-}
+.carro   .cat-ico{background:rgba(107,130,156,.1);}
+.restante .cat-ico{background:rgba(45,212,191,.1);}
+.cat-name{font-size:.88rem;font-weight:700;color:var(--bright);line-height:1.2;}
+.cat-hint{font-size:10px;color:var(--muted);margin-top:2px;}
+.cat-pct{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;}
 .invest .cat-pct{color:var(--green);}
 .reserva .cat-pct{color:var(--amber);}
 .lazer   .cat-pct{color:var(--violet);}
 .carro   .cat-pct{color:var(--slate);}
+.restante .cat-pct{color:var(--teal);}
 
 .inp-shell{
-  display:flex;align-items:center;gap:8px;
+  display:flex;align-items:center;gap:7px;
   background:var(--ink3);border:1px solid var(--line);
-  border-radius:10px;padding:10px 14px;
-  transition:border-color .2s;
+  border-radius:10px;padding:9px 13px;transition:border-color .2s;
 }
 .inp-shell:focus-within{border-color:var(--blue);}
-.inp-pre{
-  font-family:'JetBrains Mono',monospace;
-  font-size:13px;color:var(--muted);
-}
+.inp-pre{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
 .inp-shell input{
   flex:1;background:transparent;border:none;outline:none;
   font-family:'Bricolage Grotesque',sans-serif;
-  font-size:1.15rem;font-weight:700;color:var(--bright);
-  min-width:0;
+  font-size:1.1rem;font-weight:700;color:var(--bright);min-width:0;
 }
-.cat-bar{height:2px;background:var(--ink4);border-radius:1px;margin-top:12px;overflow:hidden;}
+/* Restante é readonly */
+.inp-shell input[readonly]{color:var(--teal);cursor:default;}
+
+.cat-bar{height:2px;background:var(--ink4);border-radius:1px;margin-top:11px;overflow:hidden;}
 .cat-bar-fill{height:100%;border-radius:1px;transition:width .5s cubic-bezier(.4,0,.2,1);}
 .invest .cat-bar-fill{background:var(--green);}
 .reserva .cat-bar-fill{background:var(--amber);}
 .lazer   .cat-bar-fill{background:var(--violet);}
 .carro   .cat-bar-fill{background:var(--slate);}
+.restante .cat-bar-fill{background:var(--teal);}
 
-/* invest extras */
+/* INVEST EXTRAS */
 .inv-grid{
   display:grid;grid-template-columns:1fr 1fr;gap:8px;
-  margin-top:14px;padding-top:14px;
-  border-top:1px dashed var(--line);
+  margin-top:13px;padding-top:12px;border-top:1px dashed var(--line);
 }
-.inv-box{background:var(--ink3);border-radius:10px;padding:10px 12px;}
+.inv-box{background:var(--ink3);border-radius:9px;padding:9px 11px;}
 .inv-box-lbl{
-  font-size:9px;text-transform:uppercase;letter-spacing:.1em;
-  color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:4px;
+  font-size:8px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px;
 }
-.inv-box-val{
-  font-family:'JetBrains Mono',monospace;
-  font-size:.9rem;font-weight:600;color:var(--green);
-}
-.inv-box-val.neut{color:var(--text);}
+.inv-box-val{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:600;color:var(--green);}
 .btn-reset-hist{
-  margin-top:6px;background:none;border:1px solid var(--line);
-  border-radius:6px;padding:3px 8px;color:var(--muted);
-  font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;
-  transition:all .2s;
+  margin-top:5px;background:none;border:1px solid var(--line);
+  border-radius:5px;padding:2px 7px;color:var(--muted);
+  font-size:9px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;
 }
 .btn-reset-hist:hover{border-color:var(--rose);color:var(--rose);}
 
-/* ── SALDO STRIP ── */
+/* RESTANTE CARD - badge "calculado automaticamente" */
+.auto-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.2);
+  border-radius:6px;padding:3px 8px;
+  font-size:9px;color:var(--teal);font-family:'JetBrains Mono',monospace;
+  margin-top:10px;
+}
+
+/* SALDO STRIP */
 .saldo-strip{
   display:flex;align-items:center;justify-content:space-between;
   background:var(--ink2);border:1px solid var(--line);
-  border-radius:var(--r);padding:16px 20px;margin-bottom:10px;
+  border-radius:var(--r);padding:15px 19px;margin-bottom:9px;
 }
-.saldo-info{}
-.saldo-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px;}
-.saldo-val{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;}
+.saldo-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px;}
+.saldo-val{font-family:'JetBrains Mono',monospace;font-size:1.35rem;font-weight:700;}
 .saldo-val.ok{color:var(--green);}
 .saldo-val.bad{color:var(--rose);}
-.saldo-icon{
-  width:42px;height:42px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;font-size:1.2rem;
-}
-.saldo-icon.ok{background:rgba(41,217,159,.12);}
-.saldo-icon.bad{background:rgba(242,92,122,.12);}
+.saldo-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.saldo-icon.ok{background:rgba(40,217,156,.1);}
+.saldo-icon.bad{background:rgba(242,92,122,.1);}
 
-/* ── ACTIONS ── */
-.actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
-
+/* ACTIONS */
+.actions{display:flex;flex-direction:column;gap:9px;margin-top:2px;}
 .btn-save{
-  width:100%;background:linear-gradient(135deg,var(--blue) 0%,var(--blue-g) 100%);
+  width:100%;background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);
   border:none;border-radius:var(--r);padding:15px;
   color:#fff;font-family:'Bricolage Grotesque',sans-serif;
   font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:-.01em;
-  transition:all .2s;box-shadow:0 4px 24px rgba(79,142,247,.22);
-  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .2s;box-shadow:0 4px 22px rgba(79,142,247,.2);
+  display:flex;align-items:center;justify-content:center;gap:8px;
 }
-.btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(79,142,247,.3);}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,142,247,.3);}
 .btn-save:active{transform:scale(.98);}
-.btn-save:disabled{opacity:.55;pointer-events:none;}
-
+.btn-save:disabled{opacity:.5;pointer-events:none;}
 .btn-sheets{
   width:100%;background:transparent;border:1px solid var(--line2);
-  border-radius:var(--r);padding:13px;
+  border-radius:var(--r);padding:12px;
   color:var(--dim);font-family:'Bricolage Grotesque',sans-serif;
   font-size:.875rem;font-weight:500;cursor:pointer;
   transition:all .2s;text-decoration:none;
-  display:flex;align-items:center;justify-content:center;gap:8px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
 }
 .btn-sheets:hover{border-color:var(--green);color:var(--green);}
-
 .spinner{
-  width:16px;height:16px;border:2px solid rgba(255,255,255,.25);
+  width:15px;height:15px;border:2px solid rgba(255,255,255,.2);
   border-top-color:#fff;border-radius:50%;
   animation:spin .7s linear infinite;display:none;flex-shrink:0;
 }
 @keyframes spin{to{transform:rotate(360deg);}}
-
 .status-wrap{
-  display:none;align-items:center;gap:10px;
-  padding:12px 16px;border-radius:12px;font-size:13px;font-weight:500;
+  display:none;align-items:center;gap:9px;
+  padding:11px 15px;border-radius:11px;font-size:12px;font-weight:500;
 }
 .status-wrap.show{display:flex;}
-.status-wrap.ok{background:rgba(41,217,159,.09);border:1px solid rgba(41,217,159,.22);color:var(--green);}
-.status-wrap.err{background:rgba(242,92,122,.09);border:1px solid rgba(242,92,122,.22);color:var(--rose);}
-.status-wrap.load{background:rgba(79,142,247,.09);border:1px solid rgba(79,142,247,.22);color:var(--blue);}
-.status-ico{font-size:15px;flex-shrink:0;}
+.status-wrap.ok{background:rgba(40,217,156,.08);border:1px solid rgba(40,217,156,.2);color:var(--green);}
+.status-wrap.err{background:rgba(242,92,122,.08);border:1px solid rgba(242,92,122,.2);color:var(--rose);}
+.status-wrap.load{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);color:var(--blue);}
+.status-ico{font-size:14px;flex-shrink:0;}
 
-/* ── FOOTER ── */
-.foot{text-align:center;margin-top:30px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
-
-/* ── ANIMATIONS ── */
-@keyframes rise{
-  from{opacity:0;transform:translateY(18px);}
-  to{opacity:1;transform:translateY(0);}
+/* APPS SCRIPT BOX */
+.script-box{
+  background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 20px;margin-top:8px;
 }
-.cat.invest{animation:rise .5s .16s ease both;}
-.cat.reserva{animation:rise .5s .22s ease both;}
-.cat.lazer  {animation:rise .5s .28s ease both;}
-.cat.carro  {animation:rise .5s .34s ease both;}
-.saldo-strip{animation:rise .5s .38s ease both;}
-.actions    {animation:rise .5s .42s ease both;}
+.script-box-title{
+  font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.11em;
+  color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.script-box-title span{color:var(--amber);}
+pre.code{
+  background:var(--ink3);border:1px solid var(--line);border-radius:9px;
+  padding:12px 14px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;line-height:1.7;color:var(--dim);overflow-x:auto;
+  white-space:pre;
+}
+pre.code .kw{color:var(--blue);}
+pre.code .fn{color:var(--violet);}
+pre.code .str{color:var(--green);}
+pre.code .cm{color:var(--muted);}
+pre.code .val{color:var(--amber);}
+
+.foot{text-align:center;margin-top:28px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+/* ANIMATIONS */
+@keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.sheet-preview{animation:rise .55s .1s ease both;}
+.cat.invest{animation:rise .5s .15s ease both;}
+.cat.reserva{animation:rise .5s .2s ease both;}
+.cat.lazer{animation:rise .5s .25s ease both;}
+.cat.carro{animation:rise .5s .3s ease both;}
+.cat.restante{animation:rise .5s .35s ease both;}
+.saldo-strip{animation:rise .5s .37s ease both;}
+.actions{animation:rise .5s .4s ease both;}
 </style>
 </head>
 <body>
@@ -348,7 +343,7 @@ body{
     <p>Organize, distribua e registre seu dinheiro</p>
   </header>
 
-  <!-- SALÁRIO HERO -->
+  <!-- SALÁRIO -->
   <div class="salary-hero">
     <div class="salary-tag">// salário base do mês</div>
     <div class="salary-row">
@@ -359,11 +354,11 @@ body{
     <div class="salary-trio">
       <div class="strio-item">
         <div class="strio-lbl">Distribuído</div>
-        <div class="strio-val" id="s-dist">R$ 0</div>
+        <div class="strio-val" id="s-dist">R$0</div>
       </div>
       <div class="strio-item">
-        <div class="strio-lbl">Saldo livre</div>
-        <div class="strio-val ok" id="s-saldo">R$ 0</div>
+        <div class="strio-lbl">Restante</div>
+        <div class="strio-val ok" id="s-rest">R$0</div>
       </div>
       <div class="strio-item">
         <div class="strio-lbl">% Alocado</div>
@@ -372,25 +367,28 @@ body{
     </div>
   </div>
 
-  <!-- DONUT -->
-  <div class="donut-panel">
+  <!-- PAINEL VISUAL -->
+  <div class="sheet-preview">
     <div class="panel-lbl">// distribuição visual</div>
     <div class="donut-row">
       <div class="donut-wrap">
-        <svg width="108" height="108" viewBox="0 0 108 108">
-          <circle cx="54" cy="54" r="42" fill="none" stroke="#1e2538" stroke-width="14"/>
-          <circle cx="54" cy="54" r="42" fill="none" stroke="var(--green)"  stroke-width="14"
-            stroke-dasharray="0 264" id="arc-inv" stroke-linecap="round"
-            style="transition:stroke-dasharray .55s cubic-bezier(.4,0,.2,1),stroke-dashoffset .55s cubic-bezier(.4,0,.2,1)"/>
-          <circle cx="54" cy="54" r="42" fill="none" stroke="var(--amber)"  stroke-width="14"
-            stroke-dasharray="0 264" id="arc-res" stroke-linecap="round"
-            style="transition:stroke-dasharray .55s cubic-bezier(.4,0,.2,1),stroke-dashoffset .55s cubic-bezier(.4,0,.2,1)"/>
-          <circle cx="54" cy="54" r="42" fill="none" stroke="var(--violet)" stroke-width="14"
-            stroke-dasharray="0 264" id="arc-laz" stroke-linecap="round"
-            style="transition:stroke-dasharray .55s cubic-bezier(.4,0,.2,1),stroke-dashoffset .55s cubic-bezier(.4,0,.2,1)"/>
-          <circle cx="54" cy="54" r="42" fill="none" stroke="var(--slate)"  stroke-width="14"
-            stroke-dasharray="0 264" id="arc-car" stroke-linecap="round"
-            style="transition:stroke-dasharray .55s cubic-bezier(.4,0,.2,1),stroke-dashoffset .55s cubic-bezier(.4,0,.2,1)"/>
+        <svg width="106" height="106" viewBox="0 0 106 106">
+          <circle cx="53" cy="53" r="40" fill="none" stroke="#1c2035" stroke-width="13"/>
+          <circle cx="53" cy="53" r="40" fill="none" stroke="var(--green)"  stroke-width="13"
+            stroke-dasharray="0 251.3" id="arc-inv" stroke-linecap="round"
+            style="transition:stroke-dasharray .5s cubic-bezier(.4,0,.2,1),stroke-dashoffset .5s cubic-bezier(.4,0,.2,1)"/>
+          <circle cx="53" cy="53" r="40" fill="none" stroke="var(--amber)"  stroke-width="13"
+            stroke-dasharray="0 251.3" id="arc-res" stroke-linecap="round"
+            style="transition:stroke-dasharray .5s cubic-bezier(.4,0,.2,1),stroke-dashoffset .5s cubic-bezier(.4,0,.2,1)"/>
+          <circle cx="53" cy="53" r="40" fill="none" stroke="var(--violet)" stroke-width="13"
+            stroke-dasharray="0 251.3" id="arc-laz" stroke-linecap="round"
+            style="transition:stroke-dasharray .5s cubic-bezier(.4,0,.2,1),stroke-dashoffset .5s cubic-bezier(.4,0,.2,1)"/>
+          <circle cx="53" cy="53" r="40" fill="none" stroke="var(--slate)"  stroke-width="13"
+            stroke-dasharray="0 251.3" id="arc-car" stroke-linecap="round"
+            style="transition:stroke-dasharray .5s cubic-bezier(.4,0,.2,1),stroke-dashoffset .5s cubic-bezier(.4,0,.2,1)"/>
+          <circle cx="53" cy="53" r="40" fill="none" stroke="var(--teal)"   stroke-width="13"
+            stroke-dasharray="0 251.3" id="arc-rest" stroke-linecap="round"
+            style="transition:stroke-dasharray .5s cubic-bezier(.4,0,.2,1),stroke-dashoffset .5s cubic-bezier(.4,0,.2,1)"/>
         </svg>
         <div class="donut-center">
           <div class="donut-pct" id="d-pct">0%</div>
@@ -398,11 +396,65 @@ body{
         </div>
       </div>
       <div class="legend">
-        <div class="leg-row"><div class="leg-left"><div class="leg-dot" style="background:var(--green)"></div><span class="leg-name">Investimento</span></div><span class="leg-val" id="l-inv">R$0</span></div>
-        <div class="leg-row"><div class="leg-left"><div class="leg-dot" style="background:var(--amber)"></div><span class="leg-name">Reserva</span></div><span class="leg-val" id="l-res">R$0</span></div>
-        <div class="leg-row"><div class="leg-left"><div class="leg-dot" style="background:var(--violet)"></div><span class="leg-name">Lazer</span></div><span class="leg-val" id="l-laz">R$0</span></div>
-        <div class="leg-row"><div class="leg-left"><div class="leg-dot" style="background:var(--slate)"></div><span class="leg-name">Carro</span></div><span class="leg-val" id="l-car">R$0</span></div>
-        <div class="leg-row saldo"><div class="leg-left"><div class="leg-dot" style="background:var(--line)"></div><span class="leg-name">Livre</span></div><span class="leg-val" id="l-free">R$0</span></div>
+        <div class="leg-row">
+          <div class="leg-left"><div class="leg-dot" style="background:var(--green)"></div><span class="leg-name">Investimento</span></div>
+          <span class="leg-val" id="l-inv">R$0</span>
+        </div>
+        <div class="leg-row">
+          <div class="leg-left"><div class="leg-dot" style="background:var(--amber)"></div><span class="leg-name">Reserva</span></div>
+          <span class="leg-val" id="l-res">R$0</span>
+        </div>
+        <div class="leg-row">
+          <div class="leg-left"><div class="leg-dot" style="background:var(--violet)"></div><span class="leg-name">Lazer</span></div>
+          <span class="leg-val" id="l-laz">R$0</span>
+        </div>
+        <div class="leg-row">
+          <div class="leg-left"><div class="leg-dot" style="background:var(--slate)"></div><span class="leg-name">Carro</span></div>
+          <span class="leg-val" id="l-car">R$0</span>
+        </div>
+        <div class="leg-row restante">
+          <div class="leg-left"><div class="leg-dot" style="background:var(--teal)"></div><span class="leg-name">Restante</span></div>
+          <span class="leg-val ok" id="l-rest">R$0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPA DE COLUNAS DA PLANILHA -->
+    <div class="sheet-cols">
+      <div class="sheet-col active">
+        <div class="sheet-col-letter">A</div>
+        <div class="sheet-col-name">Data</div>
+        <div class="sheet-col-val" id="sc-data">—</div>
+      </div>
+      <div class="sheet-col">
+        <div class="sheet-col-letter">B</div>
+        <div class="sheet-col-name">Salário</div>
+        <div class="sheet-col-val" id="sc-sal">—</div>
+      </div>
+      <div class="sheet-col">
+        <div class="sheet-col-letter">C</div>
+        <div class="sheet-col-name">Invest.</div>
+        <div class="sheet-col-val" id="sc-inv">—</div>
+      </div>
+      <div class="sheet-col">
+        <div class="sheet-col-letter">D</div>
+        <div class="sheet-col-name">Reserva</div>
+        <div class="sheet-col-val" id="sc-res">—</div>
+      </div>
+      <div class="sheet-col">
+        <div class="sheet-col-letter">E</div>
+        <div class="sheet-col-name">Lazer</div>
+        <div class="sheet-col-val" id="sc-laz">—</div>
+      </div>
+      <div class="sheet-col">
+        <div class="sheet-col-letter">F</div>
+        <div class="sheet-col-name">Carro</div>
+        <div class="sheet-col-val" id="sc-car">—</div>
+      </div>
+      <div class="sheet-col">
+        <div class="sheet-col-letter">G</div>
+        <div class="sheet-col-name">Restante</div>
+        <div class="sheet-col-val" id="sc-rest" style="color:var(--teal)">—</div>
       </div>
     </div>
   </div>
@@ -496,18 +548,28 @@ body{
     <div class="cat-bar"><div class="cat-bar-fill" id="b-car" style="width:0%"></div></div>
   </div>
 
-  <!-- SALDO LIVRE -->
-  <div class="saldo-strip" id="saldo-strip">
-    <div class="saldo-info">
-      <div class="saldo-lbl">Saldo não distribuído</div>
-      <div class="saldo-val ok" id="saldo-val">R$ 0,00</div>
+  <!-- RESTANTE — calculado automaticamente, espelha coluna G -->
+  <div class="cat restante">
+    <div class="cat-top">
+      <div class="cat-meta">
+        <div class="cat-ico">💰</div>
+        <div class="cat-text">
+          <div class="cat-name">Restante</div>
+          <div class="cat-hint">Calculado automaticamente · coluna G</div>
+        </div>
+      </div>
+      <div class="cat-pct" id="p-rest">0%</div>
     </div>
-    <div class="saldo-icon ok" id="saldo-icon">✓</div>
+    <div class="inp-shell">
+      <span class="inp-pre">R$</span>
+      <input type="number" id="inp-rest" readonly placeholder="0">
+    </div>
+    <div class="cat-bar"><div class="cat-bar-fill" id="b-rest" style="width:0%"></div></div>
+    <div class="auto-badge">⚡ salário − (invest + reserva + lazer + carro)</div>
   </div>
 
   <div class="sec-div">Ações</div>
 
-  <!-- BOTÕES -->
   <div class="actions">
     <button class="btn-save" id="btn-salvar">
       <div class="spinner" id="spin"></div>
@@ -523,28 +585,69 @@ body{
     </div>
   </div>
 
-  <div class="foot">// dados não são salvos automaticamente — use o botão acima</div>
+  <!-- APPS SCRIPT REFERENCE -->
+  <div class="sec-div" style="margin-top:28px;">Apps Script atualizado</div>
+  <div class="script-box">
+    <div class="script-box-title"><span>▶</span> Cole este código no Google Apps Script</div>
+    <pre class="code"><span class="kw">function</span> <span class="fn">doPost</span>(e) {
+  <span class="kw">try</span> {
+    <span class="kw">var</span> sheet = SpreadsheetApp
+      .<span class="fn">openById</span>(<span class="str">"1s3OO7_TR8gIBOfrFuprTM0uCQMlpZDTIvZtXDhJbSPQ"</span>)
+      .<span class="fn">getSheets</span>()[<span class="val">0</span>];
+    <span class="kw">var</span> d = JSON.<span class="fn">parse</span>(e.postData.contents);
 
-</div><!-- /shell -->
+    <span class="cm">// restante calculado no servidor</span>
+    <span class="kw">var</span> restante = d.salario -
+      (d.investimento + d.reserva + d.lazer + d.carro);
+
+    sheet.<span class="fn">appendRow</span>([
+      d.data,          <span class="cm">// A - data</span>
+      d.salario,       <span class="cm">// B - salário</span>
+      d.investimento,  <span class="cm">// C - investimento</span>
+      d.reserva,       <span class="cm">// D - reserva</span>
+      d.lazer,         <span class="cm">// E - lazer</span>
+      d.carro,         <span class="cm">// F - carro</span>
+      restante         <span class="cm">// G - restante</span>
+    ]);
+
+    <span class="kw">return</span> ContentService
+      .<span class="fn">createTextOutput</span>(JSON.<span class="fn">stringify</span>({<span class="str">"status"</span>:<span class="str">"success"</span>}))
+      .<span class="fn">setMimeType</span>(ContentService.MimeType.JSON);
+  } <span class="kw">catch</span>(err) {
+    <span class="kw">return</span> ContentService
+      .<span class="fn">createTextOutput</span>(JSON.<span class="fn">stringify</span>({
+        <span class="str">"status"</span>:<span class="str">"error"</span>,
+        <span class="str">"message"</span>:err.<span class="fn">toString</span>()
+      })).<span class="fn">setMimeType</span>(ContentService.MimeType.JSON);
+  }
+}</pre>
+  </div>
+
+  <div class="foot">// FlowSal · dados salvos no Google Sheets via Apps Script</div>
+
+</div>
 
 <script>
 const WEBAPP = "https://script.google.com/macros/s/AKfycbwaKW_E4vNr7YGSfwQ938-NcqPLn30pKagyosqikNgiCL4kpAVDZa3VVk5xH23mBFroJw/exec";
 const SELIC  = 0.0085;
-const CIRC   = 2 * Math.PI * 42; // 263.9
+const CIRC   = 2 * Math.PI * 40; // raio 40 → ~251.3
 
 let acumulado = parseFloat(localStorage.getItem('flowsal_acum')) || 0;
-
 const $ = id => document.getElementById(id);
 
 function brl(v){ return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function brlS(v){ return v >= 1000 ? 'R$'+(v/1000).toFixed(1)+'k' : 'R$'+Math.round(v); }
+function brlS(v){
+  if(Math.abs(v) >= 1000) return 'R$'+(v/1000).toFixed(1)+'k';
+  return 'R$'+Math.round(v);
+}
 function num(id){ return parseFloat($(id).value) || 0; }
 
-function arc(id, frac, offset){
+// Donut arc helper
+function setArc(id, frac, offsetFrac){
   const el = $(id);
-  const len = frac * CIRC;
+  const len = Math.max(frac * CIRC, 0);
   el.setAttribute('stroke-dasharray', len + ' ' + (CIRC - len));
-  el.setAttribute('stroke-dashoffset', offset);
+  el.setAttribute('stroke-dashoffset', offsetFrac * CIRC);
 }
 
 function calc(){
@@ -554,60 +657,79 @@ function calc(){
   const laz = num('inp-laz');
   const car = num('inp-car');
   const tot = inv + res + laz + car;
-  const livre = sal - tot;
-  const pct   = sal > 0 ? (tot/sal*100) : 0;
+  const rest = sal - tot;           // RESTANTE calculado
+  const pct  = sal > 0 ? (tot/sal*100) : 0;
+  const rPct = sal > 0 ? (rest/sal*100) : 0;
+
+  // Atualiza campo restante (readonly)
+  $(  'inp-rest').value = rest.toFixed(2);
 
   // HERO
-  $('s-dist').textContent  = brlS(tot);
-  const sv = $('s-saldo');
-  sv.textContent = brlS(livre);
-  sv.className = 'strio-val ' + (livre >= 0 ? 'ok' : 'bad');
-  $('s-pct').textContent   = pct.toFixed(1)+'%';
+  $('s-dist').textContent = brlS(tot);
+  const sv = $('s-rest');
+  sv.textContent = brlS(rest);
+  sv.className   = 'strio-val ' + (rest >= 0 ? 'ok' : 'bad');
+  $('s-pct').textContent = pct.toFixed(1)+'%';
 
-  // DONUT
-  $('d-pct').textContent   = pct.toFixed(0)+'%';
-  const C = CIRC, base = C * .25;
+  // DONUT (5 arcos: inv, res, laz, car, rest)
+  $('d-pct').textContent = Math.round(pct)+'%';
   if(sal > 0){
     const f1=inv/sal, f2=res/sal, f3=laz/sal, f4=car/sal;
-    const l1=f1*C, l2=f2*C, l3=f3*C, l4=f4*C;
-    arc('arc-inv', f1,  base);
-    arc('arc-res', f2,  base - l1);
-    arc('arc-laz', f3,  base - l1 - l2);
-    arc('arc-car', f4,  base - l1 - l2 - l3);
+    const fR = Math.max(rest/sal, 0);
+    // offset inicial = 0.25 (topo do círculo)
+    const off1 = 0.25;
+    const off2 = off1 - f1;
+    const off3 = off2 - f2;
+    const off4 = off3 - f3;
+    const off5 = off4 - f4;
+    setArc('arc-inv',  f1, off1);
+    setArc('arc-res',  f2, off2);
+    setArc('arc-laz',  f3, off3);
+    setArc('arc-car',  f4, off4);
+    setArc('arc-rest', fR, off5);
   } else {
-    ['arc-inv','arc-res','arc-laz','arc-car'].forEach(id=>{
-      $(id).setAttribute('stroke-dasharray','0 '+C);
+    ['arc-inv','arc-res','arc-laz','arc-car','arc-rest'].forEach(id=>{
+      $(id).setAttribute('stroke-dasharray','0 '+CIRC);
     });
   }
 
-  // LEGEND
-  $('l-inv').textContent = brlS(inv);
-  $('l-res').textContent = brlS(res);
-  $('l-laz').textContent = brlS(laz);
-  $('l-car').textContent = brlS(car);
-  const lf = $('l-free');
-  lf.textContent  = brlS(Math.max(livre,0));
-  lf.className    = 'leg-val' + (livre < 0 ? ' bad' : '');
+  // LEGENDA
+  $('l-inv').textContent  = brlS(inv);
+  $('l-res').textContent  = brlS(res);
+  $('l-laz').textContent  = brlS(laz);
+  $('l-car').textContent  = brlS(car);
+  const lrest = $('l-rest');
+  lrest.textContent = brlS(rest);
+  lrest.className   = 'leg-val ' + (rest >= 0 ? 'ok' : 'bad');
 
-  // PERCENTAGES + BARS
+  // MAPA DE COLUNAS
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  $('sc-data').textContent = hoje;
+  $('sc-sal').textContent  = brlS(sal);
+  $('sc-inv').textContent  = brlS(inv);
+  $('sc-res').textContent  = brlS(res);
+  $('sc-laz').textContent  = brlS(laz);
+  $('sc-car').textContent  = brlS(car);
+  const scRest = $('sc-rest');
+  scRest.textContent = brlS(rest);
+  scRest.style.color = rest >= 0 ? 'var(--teal)' : 'var(--rose)';
+
+  // %% + BARRAS por categoria
   function pS(v){ return sal > 0 ? (v/sal*100).toFixed(1)+'%' : '0%'; }
-  function bW(v){ return sal > 0 ? Math.min(v/sal*100,100).toFixed(2)+'%' : '0%'; }
+  function bW(v){ return sal > 0 ? Math.min(Math.max(v/sal*100,0),100).toFixed(2)+'%' : '0%'; }
   $('p-inv').textContent = pS(inv); $('b-inv').style.width = bW(inv);
   $('p-res').textContent = pS(res); $('b-res').style.width = bW(res);
   $('p-laz').textContent = pS(laz); $('b-laz').style.width = bW(laz);
   $('p-car').textContent = pS(car); $('b-car').style.width = bW(car);
 
+  const restPct = sal > 0 ? Math.max(rest/sal*100, 0) : 0;
+  $('p-rest').textContent = sal > 0 ? rPct.toFixed(1)+'%' : '0%';
+  $('p-rest').style.color = rest >= 0 ? 'var(--teal)' : 'var(--rose)';
+  $('b-rest').style.width = restPct.toFixed(2)+'%';
+
   // INVEST METRICS
   $('m-acum').textContent = brl(acumulado);
   $('m-rend').textContent = brl(acumulado * SELIC);
-
-  // SALDO STRIP
-  const sv2 = $('saldo-val');
-  const si   = $('saldo-icon');
-  sv2.textContent = brl(livre);
-  sv2.className   = 'saldo-val ' + (livre >= 0 ? 'ok' : 'bad');
-  si.textContent  = livre >= 0 ? '✓' : '!';
-  si.className    = 'saldo-icon ' + (livre >= 0 ? 'ok' : 'bad');
 }
 
 ['inp-sal','inp-inv','inp-res','inp-laz','inp-car'].forEach(id=>{
@@ -622,32 +744,39 @@ $('btn-reset').addEventListener('click', ()=>{
   }
 });
 
-function status(msg, type){
+function setStatus(msg, type){
   const b = $('status-box');
   const icons = {ok:'✓', err:'✕', load:'◌'};
-  b.className = 'status-wrap show ' + type;
-  $('st-ico').textContent = icons[type] || '●';
+  b.className = 'status-wrap show '+type;
+  $('st-ico').textContent = icons[type]||'●';
   $('st-txt').textContent = msg;
 }
 
 $('btn-salvar').addEventListener('click', async ()=>{
   const btn = $('btn-salvar');
-  const now = new Date();
-  const data = now.toLocaleDateString('pt-BR');
+  const sal  = num('inp-sal');
+  const inv  = num('inp-inv');
+  const res  = num('inp-res');
+  const laz  = num('inp-laz');
+  const car  = num('inp-car');
+  const rest = sal - (inv + res + laz + car);   // calculado aqui também
+  const dataHoje = new Date().toLocaleDateString('pt-BR');
 
+  // Payload EXATAMENTE na ordem das colunas A→G da planilha
   const payload = {
-    data,
-    salario:      num('inp-sal'),
-    investimento: num('inp-inv'),
-    reserva:      num('inp-res'),
-    lazer:        num('inp-laz'),
-    carro:        num('inp-car')
+    data:          dataHoje,   // col A
+    salario:       sal,        // col B
+    investimento:  inv,        // col C
+    reserva:       res,        // col D
+    lazer:         laz,        // col E
+    carro:         car,        // col F
+    restante:      rest        // col G (Apps Script calcula no servidor tb)
   };
 
   btn.disabled = true;
   $('spin').style.display = 'block';
   $('btn-txt').textContent = 'Salvando...';
-  status('Enviando dados para a planilha...', 'load');
+  setStatus('Enviando para a planilha...', 'load');
 
   try {
     await fetch(WEBAPP, {
@@ -655,12 +784,12 @@ $('btn-salvar').addEventListener('click', async ()=>{
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
-    acumulado += payload.investimento;
+    acumulado += inv;
     localStorage.setItem('flowsal_acum', acumulado);
     calc();
-    status('Registrado em ' + data + ' com sucesso!', 'ok');
+    setStatus('✓ Salvo em '+dataHoje+' — linha adicionada na planilha!', 'ok');
   } catch(e) {
-    status('Falha na conexão. Tente novamente.', 'err');
+    setStatus('Falha na conexão. Verifique e tente novamente.', 'err');
   } finally {
     btn.disabled = false;
     $('spin').style.display = 'none';
