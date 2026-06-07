@@ -580,7 +580,10 @@ function switchTab(name){
   document.getElementById('tab-'+name).classList.add('active');
 }
 
-function recalc(){
+function recalc(opts){
+  /* opts = {skipCats: bool} — pass {skipCats:true} when called from within
+   * a cat input edit so we don't destroy the DOM and lose focus.          */
+  opts=opts||{};
   var s=sal();
   var ct=totalCats(),txs_s=totalTxSaidas(),txs_e=totalTxEntradas(),bp=totalBillsPago(),bpend=totalBillsPendente();
   var saidas=ct+txs_s+bp;
@@ -588,44 +591,34 @@ function recalc(){
   var pct=s>0?(saidas/s*100).toFixed(1):0;
 
   var hv=document.getElementById('heroSaldo');
-  hv.textContent=fmtN(saldo);
-  hv.className='saldo-val'+(saldo<0?' danger':saldo<s*0.08?' warn':'');
-  document.getElementById('heroSalario').textContent=fmt(s);
-  document.getElementById('heroCats').textContent=fmt(ct);
-  document.getElementById('heroTx').textContent='− '+fmt(txs_s);
-  document.getElementById('heroBills').textContent=fmt(bp);
-  document.getElementById('heroEntradas').textContent='+ '+fmt(txs_e);
-
-  document.getElementById('sumSal').textContent=fmt(s);
-  document.getElementById('sumSaidas').textContent=fmt(saidas);
-  document.getElementById('sumSaidasPct').textContent=pct+'%';
+  if(hv){hv.textContent=fmtN(saldo);hv.className='saldo-val'+(saldo<0?' danger':saldo<s*0.08?' warn':'');}
+  setText('heroSalario',fmt(s));
+  setText('heroCats',fmt(ct));
+  setText('heroTx','− '+fmt(txs_s));
+  setText('heroBills',fmt(bp));
+  setText('heroEntradas','+ '+fmt(txs_e));
+  setText('sumSal',fmt(s));
+  setText('sumSaidas',fmt(saidas));
+  setText('sumSaidasPct',pct+'%');
   var ss=document.getElementById('sumSaldo');
-  ss.textContent=fmt(saldo);
-  ss.className='sum-val '+(saldo<0?'c-red':saldo<s*0.05?'':'c-green');
-
-  document.getElementById('catSumN').textContent=cats.length;
+  if(ss){ss.textContent=fmt(saldo);ss.className='sum-val '+(saldo<0?'c-red':saldo<s*0.05?'':'c-green');}
+  setText('catSumN',cats.length);
   var cp=s>0?(ct/s*100).toFixed(1):0;
-  document.getElementById('catSumPct').textContent=cp+'%';
-  document.getElementById('catSumVal').textContent=fmt(ct);
-
+  setText('catSumPct',cp+'%');
+  setText('catSumVal',fmt(ct));
   var bal=txs_e-txs_s;
-  document.getElementById('txSumSaidas').textContent=fmt(txs_s);
-  document.getElementById('txSumEntradas').textContent=fmt(txs_e);
+  setText('txSumSaidas',fmt(txs_s));
+  setText('txSumEntradas',fmt(txs_e));
   var be=document.getElementById('txBalanco');
-  be.textContent=fmt(bal);
-  be.className='sum-val '+(bal<0?'c-red':'c-green');
-
+  if(be){be.textContent=fmt(bal);be.className='sum-val '+(bal<0?'c-red':'c-green');}
   var bt=bills.reduce(function(a,b){return a+b.val;},0);
-  document.getElementById('billsTotal').textContent=fmt(bt);
-  document.getElementById('billsPago').textContent=fmt(bp);
-  document.getElementById('billsPendente').textContent=fmt(bpend);
+  setText('billsTotal',fmt(bt));setText('billsPago',fmt(bp));setText('billsPendente',fmt(bpend));
+  setText('badgeTx',txs.length);setText('badgeContas',bills.length);
+  setText('badgeCats',cats.length);setText('badgeMetas',goals.length);
 
-  document.getElementById('badgeTx').textContent=txs.length;
-  document.getElementById('badgeContas').textContent=bills.length;
-  document.getElementById('badgeCats').textContent=cats.length;
-  document.getElementById('badgeMetas').textContent=goals.length;
-
-  renderCats();renderTxList();renderBills();calcRend();renderChart();savePersist();
+  // Only do full cat re-render when explicitly needed (not during live editing)
+  if(!opts.skipCats) renderCats();
+  renderTxList();renderBills();calcRend();renderChart();savePersist();
 }
 
 function calcRend(){
@@ -771,38 +764,208 @@ function renderBills(){
   }).join('');
 }
 
-/* CATEGORIES */
+/* CATEGORIES
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ARCHITECTURE: renderCats() builds the DOM once (full innerHTML).
+ * After that, edits use updateCatDisplay(id) which patches ONLY the text nodes
+ * and progress bar of that specific card — the input elements are NEVER touched,
+ * so focus is never lost.
+ *
+ * recalc() accepts an optional flag {skipCats:true} to skip renderCats()
+ * during live editing, avoiding the destroy-and-recreate cycle.
+ *
+ * Event delegation on #catsGrid handles oninput for both number fields,
+ * eliminating inline onclick/oninput strings that would be stale after a re-render.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+// Debounce timer for persist-only saves during cat editing
+var _catDebounce = null;
+// Flag: true while a cat input is being actively edited
+var _editingCat = false;
+
 function toggleAddCat(){document.getElementById('addCatForm').classList.toggle('open');}
+
+/* Full render — called only on initial load, add, delete, autoDistribuir */
 function renderCats(){
   var s=sal();
   var grid=document.getElementById('catsGrid');
-  if(!cats.length){grid.innerHTML='<div style="color:var(--text3);font-size:13px;grid-column:1/-1;padding:1rem 0">Nenhuma categoria. Clique em "Nova" para começar.</div>';return;}
+  if(!cats.length){
+    grid.innerHTML='<div style="color:var(--text3);font-size:13px;grid-column:1/-1;padding:1rem 0">Nenhuma categoria. Clique em "Nova" para começar.</div>';
+    return;
+  }
   grid.innerHTML=cats.map(function(c,i){
     var v=catVal(c);
     var pr=s>0?(v/s*100):c.pct;
-    var fill=Math.min(100,pr);
+    var fill=Math.min(100,Math.max(0,pr));
     var color=PALETTE[i%PALETTE.length];
-    return '<div class="cat-card"><div class="cat-top"><div class="cat-icon">'+c.emoji+'</div><div class="cat-name-wrap"><div class="cat-name">'+c.name+'</div><div class="cat-type-badge">'+(c.manual!=null?'fixo':'porcentagem')+'</div></div><button class="cat-del" onclick="delCat('+c.id+')">✕</button></div><div class="cat-inputs"><input type="number" class="cat-input-pct" value="'+c.pct.toFixed(1)+'" min="0" max="100" step="0.1" oninput="updatePct('+c.id+',this.value)"><span class="cat-divider">% ou</span><input type="number" class="cat-input-manual" placeholder="R$ fixo" step="0.01" min="0" value="'+(c.manual!=null?c.manual.toFixed(2):'')+'" oninput="updateManual('+c.id+',this.value)"></div><div class="cat-value">'+fmt(v)+'</div><div class="cat-sub">'+pr.toFixed(1)+'% do salário</div><div class="prog-bar"><div class="prog-fill" style="width:'+fill+'%;background:'+color+'"></div></div></div>';
+    return (
+      '<div class="cat-card" data-id="'+c.id+'" data-idx="'+i+'">'
+      +'<div class="cat-top">'
+      +'<div class="cat-icon">'+c.emoji+'</div>'
+      +'<div class="cat-name-wrap">'
+      +'<div class="cat-name">'+c.name+'</div>'
+      +'<div class="cat-type-badge" data-badge>'+(c.manual!=null?'fixo':'porcentagem')+'</div>'
+      +'</div>'
+      +'<button class="cat-del" data-del="'+c.id+'">✕</button>'
+      +'</div>'
+      +'<div class="cat-inputs">'
+      +'<input type="number" class="cat-input-pct" data-pct="'+c.id+'" value="'+c.pct.toFixed(1)+'" min="0" max="100" step="0.1" autocomplete="off">'
+      +'<span class="cat-divider">% ou</span>'
+      +'<input type="number" class="cat-input-manual" data-man="'+c.id+'" placeholder="R$ fixo" step="0.01" min="0" value="'+(c.manual!=null?c.manual.toFixed(2):'')+'" autocomplete="off">'
+      +'</div>'
+      +'<div class="cat-value" data-val>'+fmt(v)+'</div>'
+      +'<div class="cat-sub" data-sub>'+pr.toFixed(1)+'% do salário</div>'
+      +'<div class="prog-bar"><div class="prog-fill" data-fill style="width:'+fill+'%;background:'+color+'"></div></div>'
+      +'</div>'
+    );
   }).join('');
 }
-function updatePct(id,val){var c=cats.find(function(x){return x.id===id;});if(!c)return;c.pct=parseFloat(val)||0;c.manual=null;recalc();}
-function updateManual(id,val){var c=cats.find(function(x){return x.id===id;});if(!c)return;var s=sal();if(val===''||val==null){c.manual=null;}else{c.manual=parseFloat(val)||0;if(s>0)c.pct=+(c.manual/s*100).toFixed(2);}recalc();}
-function delCat(id){cats=cats.filter(function(x){return x.id!==id;});recalc();showToast('Categoria removida','🗑');}
+
+/* Patch only the display elements of one card — inputs are untouched */
+function updateCatDisplay(id){
+  var s=sal();
+  var c=cats.find(function(x){return x.id===id;});
+  if(!c) return;
+  var card=document.querySelector('.cat-card[data-id="'+id+'"]');
+  if(!card) return;
+  var i=cats.indexOf(c);
+  var v=catVal(c);
+  var pr=s>0?(v/s*100):c.pct;
+  var fill=Math.min(100,Math.max(0,pr));
+  var color=PALETTE[i%PALETTE.length];
+  var valEl=card.querySelector('[data-val]');
+  var subEl=card.querySelector('[data-sub]');
+  var fillEl=card.querySelector('[data-fill]');
+  var badgeEl=card.querySelector('[data-badge]');
+  if(valEl)  valEl.textContent=fmt(v);
+  if(subEl)  subEl.textContent=pr.toFixed(1)+'% do salário';
+  if(fillEl){fillEl.style.width=fill+'%';fillEl.style.background=color;}
+  if(badgeEl)badgeEl.textContent=c.manual!=null?'fixo':'porcentagem';
+}
+
+/* Update only the summary numbers and hero — no DOM rebuild */
+function updateSummaryOnly(){
+  var s=sal();
+  var ct=totalCats(),txs_s=totalTxSaidas(),txs_e=totalTxEntradas(),bp=totalBillsPago(),bpend=totalBillsPendente();
+  var saidas=ct+txs_s+bp;
+  var saldo=s-saidas+txs_e;
+  var pct=s>0?(saidas/s*100).toFixed(1):0;
+
+  var hv=document.getElementById('heroSaldo');
+  if(hv){hv.textContent=fmtN(saldo);hv.className='saldo-val'+(saldo<0?' danger':saldo<s*0.08?' warn':'');}
+  setText('heroSalario',fmt(s));
+  setText('heroCats',fmt(ct));
+  setText('heroTx','− '+fmt(txs_s));
+  setText('heroBills',fmt(bp));
+  setText('heroEntradas','+ '+fmt(txs_e));
+  setText('sumSal',fmt(s));
+  setText('sumSaidas',fmt(saidas));
+  setText('sumSaidasPct',pct+'%');
+  var ss=document.getElementById('sumSaldo');
+  if(ss){ss.textContent=fmt(saldo);ss.className='sum-val '+(saldo<0?'c-red':saldo<s*0.05?'':'c-green');}
+  setText('catSumN',cats.length);
+  var cp=s>0?(ct/s*100).toFixed(1):0;
+  setText('catSumPct',cp+'%');
+  setText('catSumVal',fmt(ct));
+  var bal=txs_e-txs_s;
+  setText('txSumSaidas',fmt(txs_s));
+  setText('txSumEntradas',fmt(txs_e));
+  var be=document.getElementById('txBalanco');
+  if(be){be.textContent=fmt(bal);be.className='sum-val '+(bal<0?'c-red':'c-green');}
+  var bt=bills.reduce(function(a,b){return a+b.val;},0);
+  setText('billsTotal',fmt(bt));setText('billsPago',fmt(bp));setText('billsPendente',fmt(bpend));
+  setText('badgeTx',txs.length);setText('badgeContas',bills.length);
+  setText('badgeCats',cats.length);setText('badgeMetas',goals.length);
+}
+function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
+
+/* Event delegation — attached once on #catsGrid, handles all cat inputs and delete buttons */
+function initCatsGrid(){
+  var grid=document.getElementById('catsGrid');
+  if(grid._delegated) return; // already initialized, skip
+  grid._delegated=true;
+  // Input events
+  grid.addEventListener('input',function(e){
+    var tgt=e.target;
+    var id;
+    if(tgt.dataset.pct!==undefined){
+      id=parseInt(tgt.dataset.pct,10);
+      var c=cats.find(function(x){return x.id===id;});
+      if(!c) return;
+      c.pct=parseFloat(tgt.value)||0;
+      c.manual=null;
+      // Clear the manual field in same card without re-rendering
+      var card=tgt.closest('.cat-card');
+      if(card){var man=card.querySelector('[data-man]');if(man)man.value='';}
+      updateCatDisplay(id);
+      updateSummaryOnly();
+      calcRend();
+      renderChart();
+      debouncePersist();
+    } else if(tgt.dataset.man!==undefined){
+      id=parseInt(tgt.dataset.man,10);
+      var c2=cats.find(function(x){return x.id===id;});
+      if(!c2) return;
+      var s=sal();
+      if(tgt.value===''||tgt.value==null){
+        c2.manual=null;
+      } else {
+        c2.manual=parseFloat(tgt.value)||0;
+        if(s>0) c2.pct=+(c2.manual/s*100).toFixed(2);
+        // Update pct field display without touching focus
+        var card2=tgt.closest('.cat-card');
+        if(card2){var pctInp=card2.querySelector('[data-pct]');if(pctInp&&document.activeElement!==pctInp)pctInp.value=c2.pct.toFixed(1);}
+      }
+      updateCatDisplay(id);
+      updateSummaryOnly();
+      calcRend();
+      renderChart();
+      debouncePersist();
+    }
+  });
+  // Delete buttons
+  grid.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-del]');
+    if(btn){
+      var id=parseInt(btn.dataset.del,10);
+      cats=cats.filter(function(x){return x.id!==id;});
+      recalc();
+      showToast('Categoria removida','🗑');
+    }
+  });
+}
+
+function debouncePersist(){
+  clearTimeout(_catDebounce);
+  _catDebounce=setTimeout(savePersist,600);
+}
+
 function addCategoria(){
   var name=document.getElementById('newCatName').value.trim();
   var pct=parseFloat(document.getElementById('newCatPct').value)||0;
   var emoji=document.getElementById('newCatEmoji').value.trim()||'📁';
   if(!name){showToast('Coloca um nome!','⚠');return;}
   cats.push({id:nextId++,name:name,pct:pct,emoji:emoji,manual:null});
-  document.getElementById('newCatName').value='';document.getElementById('newCatPct').value='';document.getElementById('newCatEmoji').value='';
+  document.getElementById('newCatName').value='';
+  document.getElementById('newCatPct').value='';
+  document.getElementById('newCatEmoji').value='';
   document.getElementById('addCatForm').classList.remove('open');
-  recalc();showToast('Categoria adicionada!','✓');
+  recalc();
+  showToast('Categoria adicionada!','✓');
 }
+
 function autoDistribuir(){
   var total=cats.reduce(function(s,c){return s+c.pct;},0);
-  if(total<=0)return;
-  if(total>100){var f=100/total;cats.forEach(function(c){c.pct=+(c.pct*f).toFixed(2);c.manual=null;});showToast('Ajustado para 100%','✦');}
-  else{cats.forEach(function(c){c.manual=null;});showToast('Valores atualizados','✦');}
+  if(total<=0) return;
+  if(total>100){
+    var f=100/total;
+    cats.forEach(function(c){c.pct=+(c.pct*f).toFixed(2);c.manual=null;});
+    showToast('Ajustado para 100%','✦');
+  } else {
+    cats.forEach(function(c){c.manual=null;});
+    showToast('Valores atualizados','✦');
+  }
   recalc();
 }
 
@@ -886,6 +1049,7 @@ document.getElementById('mesBadge').textContent=_now.toLocaleDateString('pt-BR',
 loadConfig();loadPersist();
 if(!cats.length){cats=[{id:1,name:'Lazer com namorada',pct:16.57,emoji:'💑',manual:null},{id:2,name:'Investimentos',pct:13.71,emoji:'📈',manual:null},{id:3,name:'Emergência',pct:11.08,emoji:'🛡️',manual:null},{id:4,name:'Roupas',pct:5.71,emoji:'👕',manual:null},{id:5,name:'Carro (poupança)',pct:10.0,emoji:'🚗',manual:null}];nextId=10;}
 recalc();renderGoals();renderHist();
+initCatsGrid(); // attach event delegation to cats grid (must run after recalc which calls renderCats)
 </script>
 </body>
 </html>
