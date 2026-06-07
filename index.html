@@ -217,17 +217,113 @@ input::placeholder{color:var(--text3)}
 .goal-aporte-row input{flex:1}
 
 /* HISTORY */
-.hist-entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:8px;animation:fadeUp .2s ease}
-.hist-entry-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
-.hist-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)}
-.hist-sal{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);font-weight:500}
-.hist-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:5px;transition:all .15s}
-.hist-del:hover{color:var(--red);background:var(--red-bg)}
-.hist-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
-.hist-badge{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--text);font-family:'JetBrains Mono',monospace}
-.hist-footer{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
 .hist-empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:13px}
 .hist-empty-icon{font-size:2.5rem;margin-bottom:10px}
+
+/* === RICH MONTH HISTORY === */
+.hist-month-block{margin-bottom:14px;animation:fadeUp .25s ease}
+.hist-month-header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 18px;
+  transition:border-color .2s;
+  user-select:none;
+}
+.hist-month-header:hover{border-color:var(--border2)}
+.hist-month-header.expanded{border-color:var(--border2);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.hist-month-left{display:flex;align-items:center;gap:12px;min-width:0}
+.hist-month-chevron{font-size:11px;color:var(--text3);transition:transform .25s;flex-shrink:0}
+.hist-month-header.expanded .hist-month-chevron{transform:rotate(90deg)}
+.hist-month-label{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)}
+.hist-month-date{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.hist-month-right{display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.hist-month-sal{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--gold)}
+.hist-month-saldo{font-family:'JetBrains Mono',monospace;font-size:12px}
+.hist-month-actions{display:flex;gap:6px;align-items:center}
+.hist-month-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:4px 7px;border-radius:6px;transition:all .15s}
+.hist-month-del:hover{color:var(--red);background:var(--red-bg)}
+
+.hist-month-body{
+  background:var(--surface);
+  border:1px solid var(--border2);border-top:none;
+  border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r);
+  overflow:hidden;
+  max-height:0;transition:max-height .35s cubic-bezier(.4,0,.2,1);
+}
+.hist-month-block.expanded .hist-month-body{max-height:2000px}
+
+.hist-body-inner{padding:16px 18px 18px}
+
+.hist-section-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);font-weight:500;margin-bottom:8px;margin-top:14px}
+.hist-section-label:first-child{margin-top:0}
+
+.hist-cats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-bottom:4px}
+.hist-cat-chip{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:8px 12px;
+  display:flex;align-items:center;gap:8px;
+}
+.hist-cat-chip-icon{font-size:14px;flex-shrink:0}
+.hist-cat-chip-info{min-width:0}
+.hist-cat-chip-name{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-cat-chip-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);margin-top:1px}
+.hist-cat-chip-pct{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+
+.hist-tx-row{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 10px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  margin-bottom:4px;
+}
+.hist-tx-icon{font-size:14px;flex-shrink:0}
+.hist-tx-name{font-size:12px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-tx-amount{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;flex-shrink:0}
+
+.hist-bills-row{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 10px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  margin-bottom:4px;
+}
+.hist-bill-icon{font-size:14px;flex-shrink:0}
+.hist-bill-name{font-size:12px;flex:1}
+.hist-bill-status{font-size:10px;padding:1px 7px;border-radius:100px;font-weight:500}
+.paid-badge{background:var(--green-bg);color:var(--green)}
+.unpaid-badge{background:var(--red-bg);color:var(--red)}
+.hist-bill-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--orange);flex-shrink:0}
+
+.hist-summary-row{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:8px;padding:12px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r-sm);
+}
+.hist-sum-item{text-align:center}
+.hist-sum-lbl{font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.hist-sum-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600}
+
+.hist-save-btn{
+  display:flex;align-items:center;gap:8px;
+  width:100%;padding:16px 20px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;
+  color:var(--gold);transition:all .2s;margin-bottom:14px;
+  position:relative;overflow:hidden;
+}
+.hist-save-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(200,169,110,.04),transparent);
+  transform:translateX(-100%);transition:transform .4s;
+}
+.hist-save-btn:hover{background:var(--surface2);border-color:var(--border3)}
+.hist-save-btn:hover::before{transform:translateX(100%)}
+.hist-save-btn:active{transform:scale(.99)}
+.hist-save-icon{font-size:20px;flex-shrink:0}
+.hist-save-text{flex:1;text-align:left}
+.hist-save-sub{font-size:11px;color:var(--text3);font-weight:400;margin-top:2px}
+.hist-save-arrow{font-size:16px;color:var(--text3);flex-shrink:0}
 
 /* SETTINGS */
 .settings-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.4rem;margin-bottom:10px}
@@ -436,7 +532,7 @@ input::placeholder{color:var(--text3)}
   </div>
   <div class="cats-grid" id="catsGrid"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:1rem;border-top:1px solid var(--border)">
-    <button class="btn btn-ghost btn-sm" onclick="salvarSnapshot()">↓ Salvar snapshot</button>
+    <button class="btn btn-gold btn-sm" onclick="switchTab('historico');setTimeout(function(){salvarMesAtual();},80)">💾 Salvar no histórico</button>
     <button class="btn btn-ghost btn-sm" onclick="exportarCSV()">⬇ Exportar CSV</button>
   </div>
 </div>
@@ -452,11 +548,22 @@ input::placeholder{color:var(--text3)}
 
 <!-- TAB: HISTÓRICO -->
 <div class="tab-content" id="tab-historico">
+
+  <!-- BIG SAVE BUTTON -->
+  <button class="hist-save-btn" onclick="salvarMesAtual()">
+    <span class="hist-save-icon">💾</span>
+    <span class="hist-save-text">
+      <span style="display:block">Salvar mês atual</span>
+      <span class="hist-save-sub" id="histSaveSub">Salva salário, categorias, transações, contas e metas</span>
+    </span>
+    <span class="hist-save-arrow">→</span>
+  </button>
+
   <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
-    <div class="sec-title" style="flex:1;margin-bottom:0">Snapshots salvos</div>
+    <div class="sec-title" style="flex:1;margin-bottom:0">Histórico por mês</div>
     <button class="btn btn-red btn-sm" onclick="limparHistorico()">Limpar tudo</button>
   </div>
-  <div id="histList"><div class="hist-empty"><div class="hist-empty-icon">📂</div>Nenhum snapshot. Use "Salvar snapshot" na aba Categorias.</div></div>
+  <div id="histList"><div class="hist-empty"><div class="hist-empty-icon">📂</div>Nenhum mês salvo ainda.<br>Clique em "Salvar mês atual" para começar.</div></div>
 </div>
 
 <!-- TAB: CONFIG -->
@@ -1011,28 +1118,232 @@ function renderGoals(){
   }).join('');
 }
 
-/* HISTORY */
-function salvarSnapshot(){
+/* ═══════════════════════════════════════════════════════════
+   HISTORY  —  rich month-based snapshots
+   Each entry stores: salário, categorias, transações,
+   contas (bills), metas, investimento, saldo livre.
+   Entries are keyed by month (YYYY-MM). Saving the same
+   month again REPLACES the previous entry for that month.
+   ═══════════════════════════════════════════════════════════ */
+
+function mesAtualKey(){
+  var n=new Date();
+  return n.getFullYear()+'-'+(String(n.getMonth()+1).padStart(2,'0'));
+}
+function mesAtualLabel(){
+  return new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+
+function salvarMesAtual(){
   var s=sal();
-  var entry={id:Date.now(),date:nowStr(),salario:s,dist:totalCats(),sob:saldoLivre(),cats:cats.map(function(c){return{name:c.name,emoji:c.emoji,value:catVal(c)};})};
-  var hist=getHist();hist.unshift(entry);if(hist.length>50)hist.length=50;
+  var key=mesAtualKey();
+  var label=mesAtualLabel();
+  var agora=new Date();
+  var dateStr=agora.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})
+    +' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  var entry={
+    id:   key,                       // unique by month — overwrites same month
+    key:  key,
+    label:label,
+    savedAt: dateStr,
+    salario: s,
+    investAcum: parseFloat(document.getElementById('investAcum').value)||0,
+    investTaxa: parseFloat(document.getElementById('investTaxa').value)||0,
+    dist:  totalCats(),
+    txSaidas: totalTxSaidas(),
+    txEntradas: totalTxEntradas(),
+    billsPago: totalBillsPago(),
+    sob:   saldoLivre(),
+    cats:  cats.map(function(c){
+      var v=catVal(c);
+      return{name:c.name,emoji:c.emoji,pct:c.pct,manual:c.manual,value:v};
+    }),
+    txs: txs.map(function(t){return{name:t.name,val:t.val,tipo:t.tipo,obs:t.obs,date:t.date};}),
+    bills: bills.map(function(b){return{name:b.name,val:b.val,dia:b.dia,cat:b.cat,rec:b.rec,paid:b.paid};}),
+    goals: goals.map(function(g){return{name:g.name,emoji:g.emoji,alvo:g.alvo,atual:g.atual,prazo:g.prazo};})
+  };
+
+  var hist=getHist();
+  // Remove existing entry for same month if present
+  hist=hist.filter(function(h){return h.key!==key;});
+  hist.unshift(entry);
+  if(hist.length>60) hist.length=60;
   localStorage.setItem('cofre_hist',JSON.stringify(hist));
   document.getElementById('badgeHist').textContent=hist.length;
-  renderHist();showToast('Snapshot salvo!','💾');
+  renderHist();
+  showToast('📅 '+label+' salvo no histórico!','💾',3000);
+  // Update subtitle
+  var sub=document.getElementById('histSaveSub');
+  if(sub) sub.textContent='Última vez: '+dateStr;
 }
-function getHist(){try{return JSON.parse(localStorage.getItem('cofre_hist'))||[];}catch(e){return[];}}
-function delHist(id){var h=getHist().filter(function(x){return x.id!==id;});localStorage.setItem('cofre_hist',JSON.stringify(h));document.getElementById('badgeHist').textContent=h.length;renderHist();}
-function limparHistorico(){if(!confirm('Apagar todo o histórico?'))return;localStorage.removeItem('cofre_hist');document.getElementById('badgeHist').textContent='0';renderHist();showToast('Histórico limpo','🗑');}
+
+function getHist(){
+  try{return JSON.parse(localStorage.getItem('cofre_hist'))||[];}catch(e){return[];}
+}
+
+function delHist(key){
+  var h=getHist().filter(function(x){return x.key!==key&&x.id!==key;});
+  localStorage.setItem('cofre_hist',JSON.stringify(h));
+  document.getElementById('badgeHist').textContent=h.length;
+  renderHist();
+  showToast('Entrada removida','🗑');
+}
+
+function limparHistorico(){
+  if(!confirm('Apagar todo o histórico mensal?')) return;
+  localStorage.removeItem('cofre_hist');
+  document.getElementById('badgeHist').textContent='0';
+  renderHist();
+  showToast('Histórico limpo','🗑');
+}
+
+function toggleHistEntry(key){
+  var block=document.querySelector('.hist-month-block[data-key="'+key+'"]');
+  if(!block) return;
+  var wasExpanded=block.classList.contains('expanded');
+  // Close all
+  document.querySelectorAll('.hist-month-block.expanded').forEach(function(b){
+    b.classList.remove('expanded');
+    b.querySelector('.hist-month-header').classList.remove('expanded');
+  });
+  // Open clicked if it wasn't open
+  if(!wasExpanded){
+    block.classList.add('expanded');
+    block.querySelector('.hist-month-header').classList.add('expanded');
+  }
+}
+
 function renderHist(){
-  var hist=getHist();document.getElementById('badgeHist').textContent=hist.length;
+  var hist=getHist();
+  document.getElementById('badgeHist').textContent=hist.length;
   var el=document.getElementById('histList');
-  if(!hist.length){el.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📂</div>Nenhum snapshot salvo.</div>';return;}
-  el.innerHTML=hist.map(function(h){return '<div class="hist-entry"><div class="hist-entry-top"><span class="hist-date">🕐 '+h.date+'</span><span class="hist-sal">'+fmt(h.salario)+'</span><button class="hist-del" onclick="delHist('+h.id+')">✕</button></div><div class="hist-badges">'+(h.cats||[]).map(function(c){return '<span class="hist-badge">'+c.emoji+' '+c.name+': '+fmt(c.value)+'</span>';}).join('')+'</div><div class="hist-footer"><span>alocado: <strong>'+fmt(h.dist)+'</strong></span><span>saldo: <strong class="'+(h.sob<0?'c-red':'c-green')+'">'+fmt(h.sob)+'</strong></span></div></div>';}).join('');
+
+  if(!hist.length){
+    el.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📂</div>Nenhum mês salvo ainda.<br>Clique em "Salvar mês atual" para começar.</div>';
+    return;
+  }
+
+  // Update save button subtitle
+  var sub=document.getElementById('histSaveSub');
+  if(sub&&hist.length){sub.textContent='Salva salário, categorias, transações, contas e metas';}
+
+  el.innerHTML=hist.map(function(h,idx){
+    var key=h.key||String(h.id);
+    var sob=h.sob||0;
+    var sobClass=sob<0?'c-red':'c-green';
+    var isFirst=(idx===0);
+
+    // ── BODY ──────────────────────────────────────────────
+    var bodyHtml='<div class="hist-body-inner">';
+
+    // Summary row
+    bodyHtml+='<div class="hist-section-label">Resumo</div>';
+    bodyHtml+='<div class="hist-summary-row">';
+    bodyHtml+='<div class="hist-sum-item"><div class="hist-sum-lbl">Salário</div><div class="hist-sum-val c-gold">'+fmt(h.salario)+'</div></div>';
+    bodyHtml+='<div class="hist-sum-item"><div class="hist-sum-lbl">Alocado</div><div class="hist-sum-val">'+fmt(h.dist||0)+'</div></div>';
+    if((h.txSaidas||0)>0) bodyHtml+='<div class="hist-sum-item"><div class="hist-sum-lbl">Pix/Despesas</div><div class="hist-sum-val c-red">'+fmt(h.txSaidas)+'</div></div>';
+    if((h.billsPago||0)>0) bodyHtml+='<div class="hist-sum-item"><div class="hist-sum-lbl">Contas pagas</div><div class="hist-sum-val" style="color:var(--orange)">'+fmt(h.billsPago)+'</div></div>';
+    if((h.txEntradas||0)>0) bodyHtml+='<div class="hist-sum-item"><div class="hist-sum-lbl">Entradas</div><div class="hist-sum-val c-green">+'+fmt(h.txEntradas)+'</div></div>';
+    bodyHtml+='<div class="hist-sum-item"><div class="hist-sum-lbl">Saldo livre</div><div class="hist-sum-val '+sobClass+'">'+fmt(sob)+'</div></div>';
+    if(h.investAcum>0) bodyHtml+='<div class="hist-sum-item"><div class="hist-sum-lbl">Investido acum.</div><div class="hist-sum-val c-gold">'+fmt(h.investAcum)+'</div></div>';
+    bodyHtml+='</div>';
+
+    // Categories
+    if(h.cats&&h.cats.length){
+      bodyHtml+='<div class="hist-section-label">Categorias ('+h.cats.length+')</div>';
+      bodyHtml+='<div class="hist-cats-grid">';
+      h.cats.forEach(function(c){
+        var pct=h.salario>0?(c.value/h.salario*100).toFixed(1):c.pct.toFixed(1);
+        bodyHtml+='<div class="hist-cat-chip">'
+          +'<span class="hist-cat-chip-icon">'+c.emoji+'</span>'
+          +'<div class="hist-cat-chip-info">'
+          +'<div class="hist-cat-chip-name">'+c.name+'</div>'
+          +'<div class="hist-cat-chip-val">'+fmt(c.value)+'</div>'
+          +'<div class="hist-cat-chip-pct">'+pct+'%</div>'
+          +'</div></div>';
+      });
+      bodyHtml+='</div>';
+    }
+
+    // Transactions
+    if(h.txs&&h.txs.length){
+      bodyHtml+='<div class="hist-section-label">Transações ('+h.txs.length+')</div>';
+      var TX_ICONS={pix:'💸',desp:'🛒',conta:'🧾',entrada:'💰'};
+      h.txs.slice(0,8).forEach(function(t){
+        var sign=t.tipo==='entrada'?'+':'-';
+        var col=t.tipo==='entrada'?'c-green':'c-red';
+        bodyHtml+='<div class="hist-tx-row">'
+          +'<span class="hist-tx-icon">'+(TX_ICONS[t.tipo]||'💳')+'</span>'
+          +'<span class="hist-tx-name">'+t.name+(t.obs?' · <span style="color:var(--text3)">'+t.obs+'</span>':'')+'</span>'
+          +'<span class="hist-tx-amount '+col+'">'+sign+fmt(t.val)+'</span>'
+          +'</div>';
+      });
+      if(h.txs.length>8) bodyHtml+='<div style="font-size:11px;color:var(--text3);padding:4px 2px">+ '+(h.txs.length-8)+' transações</div>';
+    }
+
+    // Bills
+    if(h.bills&&h.bills.length){
+      var BILL_ICONS={moradia:'🏠',energia:'⚡',agua:'💧',internet:'📡',telefone:'📱',saude:'❤️',educacao:'📚',streaming:'🎬',cartao:'💳',outro:'📋'};
+      bodyHtml+='<div class="hist-section-label">Contas ('+h.bills.length+')</div>';
+      h.bills.forEach(function(b){
+        bodyHtml+='<div class="hist-bills-row">'
+          +'<span class="hist-bill-icon">'+(BILL_ICONS[b.cat]||'📋')+'</span>'
+          +'<span class="hist-bill-name">'+b.name+'</span>'
+          +'<span class="hist-bill-status '+(b.paid?'paid-badge':'unpaid-badge')+'">'+(b.paid?'Pago':'Pendente')+'</span>'
+          +'<span class="hist-bill-val">'+fmt(b.val)+'</span>'
+          +'</div>';
+      });
+    }
+
+    // Goals
+    if(h.goals&&h.goals.length){
+      bodyHtml+='<div class="hist-section-label">Metas ('+h.goals.length+')</div>';
+      bodyHtml+='<div class="hist-cats-grid">';
+      h.goals.forEach(function(g){
+        var pct=g.alvo>0?Math.min(100,(g.atual/g.alvo)*100):0;
+        var done=g.atual>=g.alvo;
+        bodyHtml+='<div class="hist-cat-chip">'
+          +'<span class="hist-cat-chip-icon">'+g.emoji+'</span>'
+          +'<div class="hist-cat-chip-info">'
+          +'<div class="hist-cat-chip-name">'+g.name+'</div>'
+          +'<div class="hist-cat-chip-val '+(done?'c-green':'')+'">'+fmt(g.atual)+' / '+fmt(g.alvo)+'</div>'
+          +'<div class="hist-cat-chip-pct">'+pct.toFixed(0)+'%'+(done?' ✓':'')+'</div>'
+          +'</div></div>';
+      });
+      bodyHtml+='</div>';
+    }
+
+    bodyHtml+='</div>'; // /hist-body-inner
+
+    // ── BLOCK HTML ────────────────────────────────────────
+    return (
+      '<div class="hist-month-block'+(isFirst?' expanded':'')+'" data-key="'+key+'">'
+      +'<div class="hist-month-header'+(isFirst?' expanded':'')+'" onclick="toggleHistEntry(''+key+'')">'
+      +'<div class="hist-month-left">'
+      +'<span class="hist-month-chevron">▶</span>'
+      +'<div>'
+      +'<div class="hist-month-label">'+h.label+'</div>'
+      +'<div class="hist-month-date">Salvo em '+h.savedAt+'</div>'
+      +'</div>'
+      +'</div>'
+      +'<div class="hist-month-right">'
+      +'<span class="hist-month-sal">'+fmt(h.salario)+'</span>'
+      +'<span class="hist-month-saldo '+sobClass+'">'+(sob>=0?'':'−')+fmt(Math.abs(sob))+' livre</span>'
+      +'<div class="hist-month-actions">'
+      +'<button class="hist-month-del" onclick="event.stopPropagation();delHist(''+key+'')" title="Excluir">✕</button>'
+      +'</div>'
+      +'</div>'
+      +'</div>'
+      +'<div class="hist-month-body">'+bodyHtml+'</div>'
+      +'</div>'
+    );
+  }).join('');
 }
 
 /* EXPORT/IMPORT */
 function exportarCSV(){var s=sal();var lines=['Categoria,Emoji,Valor,Percentual'];cats.forEach(function(c){var v=catVal(c);lines.push('"'+c.name+'","'+c.emoji+'","'+v.toFixed(2)+'","'+(s>0?(v/s*100).toFixed(2):0)+'%"');});var blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cofre_'+new Date().toISOString().slice(0,10)+'.csv';a.click();showToast('CSV exportado!','⬇');}
-function exportarTudo(){var data={version:3,salario:sal(),investAcum:parseFloat(document.getElementById('investAcum').value)||0,investTaxa:parseFloat(document.getElementById('investTaxa').value)||0,cats:cats,txs:txs,bills:bills,goals:goals,hist:getHist(),exportedAt:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cofre_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();showToast('Backup exportado!','⬇');}
+function exportarTudo(){var data={version:4,salario:sal(),investAcum:parseFloat(document.getElementById('investAcum').value)||0,investTaxa:parseFloat(document.getElementById('investTaxa').value)||0,cats:cats,txs:txs,bills:bills,goals:goals,hist:getHist(),exportedAt:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cofre_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();showToast('Backup exportado!','⬇');}
 function processarImport(evt){var file=evt.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);if(data.salario!=null)document.getElementById('salarioInput').value=data.salario;if(data.investAcum!=null)document.getElementById('investAcum').value=data.investAcum;if(data.investTaxa!=null)document.getElementById('investTaxa').value=data.investTaxa;if(Array.isArray(data.cats))cats=data.cats;if(Array.isArray(data.txs))txs=data.txs;if(Array.isArray(data.bills))bills=data.bills;if(Array.isArray(data.goals))goals=data.goals;if(Array.isArray(data.hist))localStorage.setItem('cofre_hist',JSON.stringify(data.hist));recalc();renderGoals();renderHist();showToast('Importado!','✓');}catch(e2){showToast('Erro ao importar','✕');}};reader.readAsText(file);evt.target.value='';}
 function resetarTudo(){if(!confirm('Apagar TODOS os dados?'))return;cats=[];txs=[];bills=[];goals=[];localStorage.clear();document.getElementById('salarioInput').value='0';document.getElementById('investAcum').value='0';document.getElementById('investTaxa').value='1';recalc();renderGoals();renderHist();showToast('Dados resetados','🗑');}
 
