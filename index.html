@@ -573,6 +573,9 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 .toast.show{ transform:translateX(-50%) translateY(0); }
 .toast-ic{ width:24px; height:24px; border-radius:7px; display:grid; place-items:center; background:var(--acc-soft); color:var(--acc); flex-shrink:0; }
 .toast-ic svg{ width:15px; height:15px; }
+.toast-action{ margin-left:6px; padding:6px 13px; border-radius:var(--r-pill); border:1px solid var(--acc); background:transparent; color:var(--acc); font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; flex-shrink:0; transition:background var(--tf) var(--ease),color var(--tf) var(--ease); }
+.toast-action:hover{ background:var(--acc); color:var(--acc-ink); }
+.toast-action[hidden]{ display:none; }
 
 /* ════════════════════════════════════════════════════════════
    FAB + BOTTOM NAV (mobile)
@@ -1087,7 +1090,7 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
     <div class="modal-title" id="txTitle">Nova transação</div>
     <label class="field" style="margin-bottom:12px"><span class="field-label">Descrição</span><input type="text" id="txName" placeholder="ex: Pix para João" onkeydown="if(event.key==='Enter')saveTx()"></label>
     <div class="form-grid" style="margin-bottom:12px">
-      <label class="field"><span class="field-label">Valor (R$)</span><input type="number" id="txVal" class="mono" placeholder="0,00" min="0" step="0.01"></label>
+      <label class="field"><span class="field-label">Valor (R$)</span><input type="text" id="txVal" class="mono" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off" data-currency></label>
       <label class="field"><span class="field-label">Tipo</span><select id="txTipo"><option value="pix">💸 Pix enviado</option><option value="desp">🛒 Despesa</option><option value="conta">🧾 Pagamento de conta</option><option value="entrada">💰 Entrada extra</option></select></label>
     </div>
     <div class="form-grid" style="margin-bottom:12px">
@@ -1171,6 +1174,7 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 <div class="toast" id="toast" role="status" aria-live="polite">
   <span class="toast-ic" id="toastIc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></span>
   <span id="toastMsg">Salvo</span>
+  <button class="toast-action" id="toastAction" type="button" hidden>Desfazer</button>
 </div>
 
 
@@ -1249,12 +1253,22 @@ function loadAccent(){setAccent(localStorage.getItem('fluxo_accent')||'violet');
 function setAccent(a){document.documentElement.setAttribute('data-accent',a); document.querySelectorAll('.accent-swatch').forEach(s=>s.classList.toggle('active',s.dataset.a===a)); localStorage.setItem('fluxo_accent',a);}
 
 /* ─── TOAST ────────────────────────────────────────────────────── */
-function showToast(msg,kind){
-  var t=el('toast'),ic=el('toastIc'); if(!t)return;
+function showToast(msg,kind,opts){
+  opts=opts||{};
+  var t=el('toast'),ic=el('toastIc'),act=el('toastAction'); if(!t)return;
   var iconMap={ok:'✓',err:'✕',info:'ℹ',warn:'⚠',pix:'💸',desp:'🛒',conta:'🧾',entrada:'💰'};
   if(ic)ic.innerHTML='<span style="color:inherit">'+(iconMap[kind]||'✓')+'</span>';
   setEl('toastMsg',msg);
-  t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2800);
+  if(act){
+    if(opts.actionLabel){act.hidden=false; act.textContent=opts.actionLabel; act.onclick=function(){if(opts.onAction)opts.onAction();};}
+    else{act.hidden=true; act.onclick=null;}
+  }
+  t.classList.add('show'); clearTimeout(t._t);
+  t._t=setTimeout(function(){t.classList.remove('show'); if(act){act.hidden=true; act.onclick=null;}},opts.duration||2800);
+}
+function hideToast(){
+  var t=el('toast'),act=el('toastAction'); if(!t)return;
+  t.classList.remove('show'); clearTimeout(t._t); if(act){act.hidden=true; act.onclick=null;}
 }
 
 /* ─── SYNC STATUS ──────────────────────────────────────────────– */
@@ -1505,7 +1519,7 @@ function onSalaryChange(){
   clearTimeout(_salaryTimer); _salaryTimer=setTimeout(dbSaveProfile,500);
 }
 
-function recalc(){
+function recalc(light){
   var s=sal(), cats=totalCats(), txOut=totalTxOut(), txIn=totalTxIn(), billsPaid=totalBillsPaid(), billsPend=totalBillsPend();
   var saldo=s-cats-txOut-billsPaid+txIn;
   var committed=cats+txOut+billsPaid;
@@ -1553,9 +1567,14 @@ function recalc(){
   setEl('invInvested',fmt(invTotal)); setEl('invCurrent',fmt(invCur));
   var ig=el('invGain'); if(ig){ig.textContent=fmtSigned(invGain); ig.className='stat-num mono '+(invGain>=0?'c-green':'c-red');}
 
-  renderInsights(saldo,pctSave,pctCommit,billsPend,pendN);
-  renderTx(); renderBills(); renderCats(); renderGoals(); renderInvest();
-  renderDonut(); renderEvolution(); renderCalendar(); buildNotifications();
+  // Light pass (inline edits): live summary numbers above are already updated via setEl.
+  // Skip the innerHTML re-renders below — rebuilding them mid-keystroke is exactly what
+  // used to destroy the focused <input> and swallow every character after the first.
+  if(!light){
+    renderInsights(saldo,pctSave,pctCommit,billsPend,pendN);
+    renderTx(); renderBills(); renderCats(); renderGoals(); renderInvest();
+    renderDonut(); renderEvolution(); renderCalendar(); buildNotifications();
+  }
   savePersist();
 }
 
@@ -1612,26 +1631,108 @@ function showSkeletons(){
 }
 
 /* ═════════════════════════════════════════════════════════════
+   CURRENCY MASK  —  native, dependency-free, caret-safe
+   ─────────────────────────────────────────────────────────────
+   Treats the field as an accumulator of centavos: every digit is
+   a cent and fills the value from the right. On each keystroke the
+   value is rebuilt from the digits already present, so the <input>
+   node is NEVER destroyed and the caret is parked at the end →
+   no focus loss, no "jump to start", backspace just drops a cent.
+   The numeric amount lives in dataset.cents.
+
+     keystrokes 4 · 0 · 0 · 5  ->  0,04 · 0,40 · 4,00 · 40,05
+
+   This is the standard BR-fintech behaviour (no separator key
+   needed to reach the cents). Read it back with Currency.read().
+═════════════════════════════════════════════════════════════ */
+var Currency=(function(){
+  function fmt(cents){
+    var neg=cents<0; cents=Math.abs(cents|0);
+    var s=String(cents).padStart(3,'0');
+    var int=s.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.'), dec=s.slice(-2);
+    return (neg?'−':'')+'R$ '+int+','+dec;
+  }
+  function digitsToCents(str){
+    var d=(String(str).match(/\d/g)||[]).join('').replace(/^0+(?=\d)/,'');
+    return d===''?0:parseInt(d,10);
+  }
+  function apply(input){
+    var cents=digitsToCents(input.value);
+    input.dataset.cents=String(cents);
+    input.value=cents===0?'':fmt(cents);
+    var end=input.value.length;
+    try{input.setSelectionRange(end,end);}catch(e){}
+  }
+  return {
+    fmt:fmt,
+    /** Reais (Number) currently held by the field. */
+    read:function(input){return (parseInt(input.dataset.cents||'0',10))/100;},
+    /** Programmatically set the field from a Number of reais. */
+    set:function(input,reais){
+      var cents=Math.round((Number(reais)||0)*100);
+      input.dataset.cents=String(cents);
+      input.value=cents?fmt(cents):'';
+    },
+    clear:function(input){input.dataset.cents='0'; input.value='';},
+    /** Wire a field once. Idempotent. */
+    attach:function(input){
+      if(!input||input._curBound)return; input._curBound=true;
+      input.addEventListener('input',function(){apply(input);});
+      input.addEventListener('focus',function(){var e=input.value.length; try{input.setSelectionRange(e,e);}catch(_){}});
+    },
+    /** Attach to every [data-currency] not yet wired (call after renders). */
+    bindAll:function(root){
+      (root||document).querySelectorAll('input[data-currency]').forEach(function(i){Currency.attach(i);});
+    }
+  };
+})();
+
+/* ═════════════════════════════════════════════════════════════
+   UNDO-ABLE DELETE  (optimistic: drop from UI now, commit to
+   Supabase after the 3s grace window, or cancel on Undo)
+═════════════════════════════════════════════════════════════ */
+var _pendingTxDelete=null;
+function flushPendingTxDelete(){
+  if(!_pendingTxDelete)return;
+  clearTimeout(_pendingTxDelete.timer);
+  dbDeleteTx(_pendingTxDelete.tx.id);     // commit the deferred delete
+  _pendingTxDelete=null;
+}
+function undoTxDelete(){
+  if(!_pendingTxDelete)return;
+  clearTimeout(_pendingTxDelete.timer);
+  var p=_pendingTxDelete; _pendingTxDelete=null;
+  _txs.splice(Math.min(p.idx,_txs.length),0,p.tx);   // restore (render re-sorts by date)
+  recalc(); hideToast();
+  showToast('Transação restaurada','ok');
+}
+
+/* ═════════════════════════════════════════════════════════════
    TRANSACTIONS
 ═════════════════════════════════════════════════════════════ */
 function openTx(tipo){
   tipo=tipo||'pix';
   setEl('txTitle',(TX_ICON[tipo]||'📋')+' '+(TX_LABEL[tipo]||'Nova transação'));
-  el('txTipo').value=tipo; el('txName').value=''; el('txVal').value=''; el('txObs').value=''; el('txDate').value=todayISO();
+  el('txTipo').value=tipo; el('txName').value=''; Currency.clear(el('txVal')); el('txObs').value=''; el('txDate').value=todayISO();
   el('modalTx').classList.add('open'); setTimeout(()=>el('txName').focus(),90);
 }
 function closeTx(){el('modalTx').classList.remove('open');}
 function saveTx(){
-  var name=el('txName').value.trim(), val=clamp(el('txVal').value,0), tipo=el('txTipo').value, obs=el('txObs').value.trim(), date=el('txDate').value||todayISO();
+  var name=el('txName').value.trim(), val=clamp(Currency.read(el('txVal')),0), tipo=el('txTipo').value, obs=el('txObs').value.trim(), date=el('txDate').value||todayISO();
   if(!name)return showToast('Dê uma descrição à transação','warn');
   if(val<=0)return showToast('Informe um valor maior que zero','warn');
   var t={id:uuid(),name,val,tipo,obs,date};
   _txs.unshift(t); dbSaveTx(t); closeTx(); recalc();
   showToast(TX_ICON[tipo]+' '+fmt(val)+' registrado',tipo);
 }
-async function delTx(id){
-  if(!await confirmDialog('Remover transação','Esta movimentação será apagada. Deseja continuar?'))return;
-  _txs=_txs.filter(t=>t.id!==id); dbDeleteTx(id); recalc(); showToast('Transação removida','ok');
+function delTx(id){
+  flushPendingTxDelete();                       // commit any earlier pending delete first
+  var idx=_txs.findIndex(t=>t.id===id); if(idx<0)return;
+  var tx=_txs[idx];
+  _txs.splice(idx,1); recalc();                 // immediate UI removal
+  var timer=setTimeout(()=>{dbDeleteTx(tx.id); _pendingTxDelete=null;},3000);
+  _pendingTxDelete={tx:tx,idx:idx,timer:timer};
+  showToast('Transação removida','ok',{duration:3000,actionLabel:'Desfazer',onAction:undoTxDelete});
 }
 function setTxFilter(f,btn){_txFilter=f; document.querySelectorAll('#txSeg .seg-btn').forEach(b=>b.classList.remove('active')); if(btn)btn.classList.add('active'); renderTx();}
 function toggleAdv(){el('advPanel').classList.toggle('open'); el('advBtn').classList.toggle('active',el('advPanel').classList.contains('open'));}
@@ -1734,8 +1835,11 @@ function autoDistribute(){
   else{_cats.forEach(c=>c.manual=null); showToast('Categorias normalizadas','ok');}
   _cats.forEach(dbSaveCat); recalc();
 }
-function catEditPct(id,v){var c=_cats.find(x=>x.id===id); if(!c)return; c.pct=clamp(v,0,100); c.manual=null; dbSaveCat(c); recalc();}
-function catEditManual(id,v){var c=_cats.find(x=>x.id===id); if(!c)return; c.manual=v!==''?clamp(v,0):null; if(c.manual!=null&&sal()>0)c.pct=+(c.manual/sal()*100).toFixed(2); dbSaveCat(c); recalc();}
+var _catSaveTimers={};
+function catSaveDebounced(c){clearTimeout(_catSaveTimers[c.id]); _catSaveTimers[c.id]=setTimeout(function(){dbSaveCat(c);},400);}
+function catEditPct(id,v){var c=_cats.find(x=>x.id===id); if(!c)return; c.pct=clamp(v,0,100); c.manual=null; catSaveDebounced(c); recalc(true);}
+function catEditManual(id,v){var c=_cats.find(x=>x.id===id); if(!c)return; c.manual=v!==''?clamp(v,0):null; if(c.manual!=null&&sal()>0)c.pct=+(c.manual/sal()*100).toFixed(2); catSaveDebounced(c); recalc(true);}
+function catCommit(id){var c=_cats.find(x=>x.id===id); if(c){clearTimeout(_catSaveTimers[id]); dbSaveCat(c);} recalc();}
 async function delCat(id){
   if(!await confirmDialog('Remover categoria','A categoria deixará de fazer parte da sua distribuição. Continuar?'))return;
   _cats=_cats.filter(x=>x.id!==id); dbDeleteCat(id); recalc(); showToast('Categoria removida','ok');
@@ -1746,7 +1850,7 @@ function renderCats(){
   var s=sal();
   grid.innerHTML=_cats.map((c,i)=>{
     var v=catVal(c), pr=s>0?v/s*100:c.pct, fill=Math.min(100,Math.max(0,pr)), color=COLORS[i%COLORS.length];
-    return '<div class="cat-card"><div class="cat-head"><div class="cat-ic">'+esc(c.emoji)+'</div><div style="flex:1;min-width:0"><div class="cat-name">'+esc(c.name)+'</div><div class="cat-type">'+(c.manual!=null?'valor fixo':'porcentagem')+'</div></div><button class="row-del" onclick="delCat(\''+c.id+'\')" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3m-4 0h4"/></svg></button></div><div class="cat-inputs"><input type="number" class="mono" value="'+c.pct.toFixed(1)+'" min="0" max="100" step="0.1" oninput="catEditPct(\''+c.id+'\',this.value)" aria-label="Porcentagem"><span class="sep">% ou</span><input type="number" class="mono" placeholder="R$ fixo" min="0" step="0.01" value="'+(c.manual!=null?c.manual.toFixed(2):'')+'" oninput="catEditManual(\''+c.id+'\',this.value)" aria-label="Valor fixo"></div><div class="cat-val mono">'+fmt(v)+'</div><div class="cat-sub">'+pr.toFixed(1)+'% do salário</div><div class="bar"><div class="bar-fill" style="width:'+fill+'%;background:'+color+'"></div></div></div>';
+    return '<div class="cat-card"><div class="cat-head"><div class="cat-ic">'+esc(c.emoji)+'</div><div style="flex:1;min-width:0"><div class="cat-name">'+esc(c.name)+'</div><div class="cat-type">'+(c.manual!=null?'valor fixo':'porcentagem')+'</div></div><button class="row-del" onclick="delCat(\''+c.id+'\')" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3m-4 0h4"/></svg></button></div><div class="cat-inputs"><input type="number" class="mono" value="'+c.pct.toFixed(1)+'" min="0" max="100" step="0.1" oninput="catEditPct(\''+c.id+'\',this.value)" onchange="catCommit(\''+c.id+'\')" aria-label="Porcentagem"><span class="sep">% ou</span><input type="number" class="mono" placeholder="R$ fixo" min="0" step="0.01" value="'+(c.manual!=null?c.manual.toFixed(2):'')+'" oninput="catEditManual(\''+c.id+'\',this.value)" onchange="catCommit(\''+c.id+'\')" aria-label="Valor fixo"></div><div class="cat-val mono">'+fmt(v)+'</div><div class="cat-sub">'+pr.toFixed(1)+'% do salário</div><div class="bar"><div class="bar-fill" style="width:'+fill+'%;background:'+color+'"></div></div></div>';
   }).join('');
 }
 
@@ -2124,6 +2228,9 @@ async function initApp(){
   window.addEventListener('online',()=>{_online=true; updateSyncDot(); if(_user)loadAll().then(renderAll);});
   window.addEventListener('offline',()=>{_online=false; updateSyncDot();});
   document.addEventListener('keydown',onKeydown);
+  Currency.bindAll();                                   // wire all [data-currency] fields
+  window.addEventListener('pagehide',flushPendingTxDelete);
+  document.addEventListener('visibilitychange',function(){if(document.hidden)flushPendingTxDelete();});
   window.addEventListener('resize',()=>{document.querySelectorAll('.drop.open').forEach(d=>d.classList.remove('open'));});
 
   // Close dropdowns when clicking outside
