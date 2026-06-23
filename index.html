@@ -579,16 +579,7 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 .cmdk-foot{ display:flex; gap:14px; padding:9px 16px; border-top:1px solid var(--line); font-size:11px; color:var(--text-3); }
 .cmdk-foot span{ display:flex; align-items:center; gap:5px; }
 
-/* ════════════════════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════════════════════ */
-.toast{ position:fixed; bottom:max(26px,calc(env(safe-area-inset-bottom) + 80px)); left:50%; transform:translateX(-50%) translateY(140%); z-index:var(--z-toast); display:flex; align-items:center; gap:11px; padding:13px 19px; border-radius:var(--r-pill); background:var(--panel-solid); border:1px solid var(--line-2); box-shadow:var(--sh-lg); font-size:13.5px; font-weight:500; max-width:90vw; transition:transform var(--t) var(--spring); }
-.toast.show{ transform:translateX(-50%) translateY(0); }
-.toast-ic{ width:24px; height:24px; border-radius:7px; display:grid; place-items:center; background:var(--acc-soft); color:var(--acc); flex-shrink:0; }
-.toast-ic svg{ width:15px; height:15px; }
-.toast-action{ margin-left:6px; padding:6px 13px; border-radius:var(--r-pill); border:1px solid var(--acc); background:transparent; color:var(--acc); font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; flex-shrink:0; transition:background var(--tf) var(--ease),color var(--tf) var(--ease); }
-.toast-action:hover{ background:var(--acc); color:var(--acc-ink); }
-.toast-action[hidden]{ display:none; }
+/* TOAST — removido */
 
 /* ════════════════════════════════════════════════════════════
    FAB + BOTTOM NAV (mobile)
@@ -1184,12 +1175,7 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast" role="status" aria-live="polite">
-  <span class="toast-ic" id="toastIc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></span>
-  <span id="toastMsg">Salvo</span>
-  <button class="toast-action" id="toastAction" type="button" hidden>Desfazer</button>
-</div>
+<!-- TOAST removido -->
 
 
 <script>
@@ -1266,24 +1252,9 @@ function onThemeToggle(){var t=el('cfgDark').checked?'dark':'light'; applyTheme(
 function loadAccent(){setAccent(localStorage.getItem('fluxo_accent')||'violet');}
 function setAccent(a){document.documentElement.setAttribute('data-accent',a); document.querySelectorAll('.accent-swatch').forEach(s=>s.classList.toggle('active',s.dataset.a===a)); localStorage.setItem('fluxo_accent',a);}
 
-/* ─── TOAST ────────────────────────────────────────────────────── */
-function showToast(msg,kind,opts){
-  opts=opts||{};
-  var t=el('toast'),ic=el('toastIc'),act=el('toastAction'); if(!t)return;
-  var iconMap={ok:'✓',err:'✕',info:'ℹ',warn:'⚠',pix:'💸',desp:'🛒',conta:'🧾',entrada:'💰'};
-  if(ic)ic.innerHTML='<span style="color:inherit">'+(iconMap[kind]||'✓')+'</span>';
-  setEl('toastMsg',msg);
-  if(act){
-    if(opts.actionLabel){act.hidden=false; act.textContent=opts.actionLabel; act.onclick=function(){if(opts.onAction)opts.onAction();};}
-    else{act.hidden=true; act.onclick=null;}
-  }
-  t.classList.add('show'); clearTimeout(t._t);
-  t._t=setTimeout(function(){t.classList.remove('show'); if(act){act.hidden=true; act.onclick=null;}},opts.duration||2800);
-}
-function hideToast(){
-  var t=el('toast'),act=el('toastAction'); if(!t)return;
-  t.classList.remove('show'); clearTimeout(t._t); if(act){act.hidden=true; act.onclick=null;}
-}
+/* ─── TOAST — desativado (notificações removidas) ──────────────── */
+function showToast(){}
+function hideToast(){}
 
 /* ─── SYNC STATUS ──────────────────────────────────────────────– */
 function updateSyncDot(){
