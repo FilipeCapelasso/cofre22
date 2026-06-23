@@ -38,7 +38,7 @@
   --tf:.15s; --t:.28s; --ts:.5s;
   --sidebar:248px;
   --maxw:1560px;
-  --gutter:max(clamp(18px,3vw,44px),calc((100% - var(--maxw))/2));
+  --gutter:clamp(20px,2.4vw,56px);
   --z-bg:0; --z-app:1; --z-topbar:40; --z-bottomnav:60; --z-fab:61; --z-drop:120; --z-modal:200; --z-cmdk:240; --z-toast:300;
 }
 
@@ -731,7 +731,6 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
     </div>
     <nav class="nav" id="navMain" role="tablist"></nav>
     <div class="side-foot">
-      <button class="cmdk-hint" onclick="openCmdk()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>Buscar</span><kbd>⌘K</kbd></button>
       <button class="side-profile" id="sideProfile" onclick="toggleDrop('profileDrop',event)">
         <div class="avatar" id="sideAvatar">—</div>
         <div style="min-width:0;flex:1"><div class="sp-mail" id="sideMail">—</div>
