@@ -37,7 +37,8 @@
   --spring:cubic-bezier(.34,1.4,.5,1);
   --tf:.15s; --t:.28s; --ts:.5s;
   --sidebar:248px;
-  --maxw:1240px;
+  --maxw:1560px;
+  --gutter:max(clamp(18px,3vw,44px),calc((100% - var(--maxw))/2));
   --z-bg:0; --z-app:1; --z-topbar:40; --z-bottomnav:60; --z-fab:61; --z-drop:120; --z-modal:200; --z-cmdk:240; --z-toast:300;
 }
 
@@ -172,7 +173,7 @@ kbd{ font-family:'Geist Mono',monospace; font-size:10px; padding:2px 6px; border
 
 /* Main */
 .main{ min-width:0; display:flex; flex-direction:column; }
-.topbar{ position:sticky; top:0; z-index:var(--z-topbar); display:flex; align-items:center; gap:12px; padding:16px clamp(18px,3vw,40px); background:linear-gradient(var(--bg),color-mix(in srgb,var(--bg) 70%,transparent) 70%,transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+.topbar{ position:sticky; top:0; z-index:var(--z-topbar); display:flex; align-items:center; gap:12px; padding:16px var(--gutter); background:linear-gradient(var(--bg),color-mix(in srgb,var(--bg) 70%,transparent) 70%,transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
 .page-title{ font-size:1.42rem; font-weight:700; }
 .page-sub{ font-size:12.5px; color:var(--text-3); margin-top:1px; }
 .topbar-spacer{ flex:1; }
@@ -190,7 +191,7 @@ kbd{ font-family:'Geist Mono',monospace; font-size:10px; padding:2px 6px; border
 .dot-badge.show{ display:flex; animation:pop .35s var(--spring); }
 @keyframes pop{ 0%{transform:scale(0)} 100%{transform:scale(1)} }
 
-.content{ flex:1; padding:6px clamp(18px,3vw,40px) 120px; max-width:var(--maxw); width:100%; }
+.content{ flex:1; padding:6px var(--gutter) 120px; width:100%; }
 
 /* ─── Page transitions ───────────────────────────────────────── */
 .page{ display:none; }
@@ -387,6 +388,14 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 .cat-sub{ font-size:11px; color:var(--text-3); margin-top:2px; margin-bottom:11px; }
 .bar{ height:7px; border-radius:var(--r-pill); background:var(--panel-3); overflow:hidden; }
 .bar-fill{ height:100%; border-radius:var(--r-pill); transition:width .6s var(--ease); }
+/* Sobra (leftover) category — special, automatic */
+.cat-card.sobra{ border-color:var(--green-bd); background:linear-gradient(165deg,var(--green-soft),transparent 62%); position:relative; }
+.cat-card.sobra::after{ content:''; position:absolute; inset:0; border-radius:var(--r); pointer-events:none; box-shadow:inset 0 0 0 1px var(--green-bd); opacity:.5; }
+.cat-card.sobra .cat-ic{ background:var(--green-soft); }
+.cat-card.sobra .cat-val{ color:var(--green); }
+.sobra-tag{ font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--green); background:var(--green-soft); border:1px solid var(--green-bd); padding:3px 8px; border-radius:var(--r-pill); display:inline-flex; align-items:center; gap:4px; }
+.sobra-note{ font-size:11px; color:var(--text-3); line-height:1.5; margin:10px 0 12px; }
+.cat-card.sobra.neg .cat-val{ color:var(--red); }
 
 /* ════════════════════════════════════════════════════════════
    GOALS
@@ -427,7 +436,11 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 .cal-evt.soon{ background:var(--amber-soft); color:var(--amber); }
 .cal-evt.paid{ background:var(--green-soft); color:var(--green); }
 .cal-evt.ok{ background:var(--panel-3); color:var(--text-2); }
+.cal-evt.salary{ background:linear-gradient(90deg,var(--green-soft),transparent); color:var(--green); border:1px solid var(--green-bd); font-weight:700; }
 .cal-more{ font-size:9px; color:var(--text-3); }
+.cal-cell.payday{ border-color:var(--green-bd); background:linear-gradient(160deg,var(--green-soft),var(--panel-2) 70%); }
+.cal-cell.payday .cal-num{ color:var(--green); }
+.cal-cell.payday::before{ content:'💰'; position:absolute; top:3px; right:4px; font-size:10px; opacity:.9; }
 
 /* ════════════════════════════════════════════════════════════
    HISTORY / SNAPSHOTS
@@ -756,7 +769,7 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
       <div class="hero">
         <div class="hero-top">
           <div>
-            <div class="hero-label">Saldo disponível este mês</div>
+            <div class="hero-label" id="heroLabel">Saldo disponível este mês</div>
             <div class="hero-balance mono" id="heroBalance"><span class="cur">R$</span><span id="hbInt">0</span><span class="dec" id="hbDec">,00</span></div>
             <div class="hero-delta" id="heroDelta"></div>
           </div>
@@ -891,6 +904,7 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
         <div class="section-label">Alocação do salário</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="autoDistribute()">Normalizar 100%</button>
+          <button class="btn btn-green btn-sm" id="btnSobra" onclick="createSobra()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>Sobra do mês</button>
           <button class="btn btn-primary btn-sm" onclick="toggleAddCat()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Nova</button>
         </div>
       </div>
@@ -957,6 +971,7 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
       </div>
       <div class="section-label">Resumo do mês exibido</div>
       <div class="stat-grid">
+        <div class="stat"><div class="stat-lbl">💰 Salário (dia 5)</div><div class="stat-num mono c-green" id="calSalary">—</div></div>
         <div class="stat"><div class="stat-lbl">Contas no mês</div><div class="stat-num mono" id="calBillN">0</div></div>
         <div class="stat"><div class="stat-lbl">A pagar</div><div class="stat-num mono c-red" id="calBillPend">R$ 0,00</div></div>
         <div class="stat"><div class="stat-lbl">Pago</div><div class="stat-num mono c-green" id="calBillPaid">R$ 0,00</div></div>
@@ -1415,7 +1430,7 @@ async function loadAll(){
       if(el('investTaxa'))el('investTaxa').value=prof.data.invest_taxa!=null?prof.data.invest_taxa:1;
       if(el('cfgFreeGraph'))el('cfgFreeGraph').checked=!!prof.data.show_free_graph;
     }
-    _cats=(cats.data||[]).map(r=>({id:r.id,name:r.name,pct:num(r.pct),emoji:r.emoji||'📁',manual:r.manual_value!=null?num(r.manual_value):null}));
+    _cats=(cats.data||[]).map(function(r){var mv=r.manual_value,isSobra=(mv!=null&&num(mv)<0); return {id:r.id,name:r.name,pct:num(r.pct),emoji:r.emoji||'📁',manual:(isSobra||mv==null)?null:num(mv),sobra:isSobra};});
     _txs=(txs.data||[]).map(r=>({id:r.id,name:r.name,val:num(r.amount),tipo:r.type,obs:r.notes||'',date:r.transaction_date||todayISO()}));
     _bills=(bills.data||[]).map(r=>({id:r.id,name:r.name,val:num(r.amount),dia:r.due_day||1,cat:r.category||'outro',rec:r.recurrence||'mensal',paid:!!r.is_paid}));
     _goals=(goals.data||[]).map(r=>({id:r.id,name:r.name,emoji:r.emoji||'🎯',alvo:num(r.target_amount),atual:num(r.current_amount),prazo:r.deadline_months||12}));
@@ -1437,7 +1452,7 @@ function saveDismissed(){try{localStorage.setItem('fluxo_notifs',JSON.stringify(
 function dbErr(p){ if(p&&p.then)p.then(r=>{if(r&&r.error)console.warn('[Fluxo] db:',r.error.message);}); return p; }
 function dbSaveProfile(){if(!_user||!_sb)return; dbErr(_sb.from('profiles').upsert({id:_user.id,salario:sal()},{onConflict:'id'}));}
 function dbSaveSettings(){if(!_user||!_sb)return; dbErr(_sb.from('profiles').upsert({id:_user.id,invest_acum:clamp(el('investAcum').value,0),invest_taxa:clamp(el('investTaxa').value,0,100),show_free_graph:!!(el('cfgFreeGraph')&&el('cfgFreeGraph').checked)},{onConflict:'id'}));}
-function dbSaveCat(c){if(!_user||!_sb)return; dbErr(_sb.from('transaction_categories').upsert({id:c.id,user_id:_user.id,name:c.name,emoji:c.emoji,pct:c.pct,manual_value:c.manual,sort_order:_cats.indexOf(c)},{onConflict:'id'}));}
+function dbSaveCat(c){if(!_user||!_sb)return; dbErr(_sb.from('transaction_categories').upsert({id:c.id,user_id:_user.id,name:c.name,emoji:c.emoji,pct:c.sobra?0:c.pct,manual_value:c.sobra?-1:c.manual,sort_order:_cats.indexOf(c)},{onConflict:'id'}));}
 function dbDeleteCat(id){if(!_user||!_sb)return; dbErr(_sb.from('transaction_categories').delete().eq('id',id).eq('user_id',_user.id));}
 function dbSaveTx(t){if(!_user||!_sb)return; dbErr(_sb.from('transactions').upsert({id:t.id,user_id:_user.id,name:t.name,amount:t.val,type:t.tipo,notes:t.obs,transaction_date:t.date},{onConflict:'id'}));}
 function dbDeleteTx(id){if(!_user||!_sb)return; dbErr(_sb.from('transactions').delete().eq('id',id).eq('user_id',_user.id));}
@@ -1467,7 +1482,7 @@ function setupRealtime(){
 }
 function teardownRealtime(){_rtChannels.forEach(ch=>{try{_sb.removeChannel(ch);}catch(e){}}); _rtChannels=[];}
 function rtProfile(p){if(p.new){if(p.new.salario!=null&&document.activeElement!==el('salaryInput'))el('salaryInput').value=p.new.salario;} recalc(); savePersist();}
-function rtCat(p){if(p.eventType==='DELETE')_cats=_cats.filter(c=>c.id!==p.old.id); else{var r=p.new,c={id:r.id,name:r.name,pct:num(r.pct),emoji:r.emoji,manual:r.manual_value!=null?num(r.manual_value):null},i=_cats.findIndex(x=>x.id===c.id); if(i<0)_cats.push(c); else _cats[i]=c;} recalc(); savePersist();}
+function rtCat(p){if(p.eventType==='DELETE')_cats=_cats.filter(c=>c.id!==p.old.id); else{var r=p.new,mv=r.manual_value,isSobra=(mv!=null&&num(mv)<0),c={id:r.id,name:r.name,pct:num(r.pct),emoji:r.emoji,manual:(isSobra||mv==null)?null:num(mv),sobra:isSobra},i=_cats.findIndex(x=>x.id===c.id); if(i<0)_cats.push(c); else _cats[i]=c;} recalc(); savePersist();}
 function rtTx(p){if(p.eventType==='DELETE')_txs=_txs.filter(t=>t.id!==p.old.id); else{var r=p.new,t={id:r.id,name:r.name,val:num(r.amount),tipo:r.type,obs:r.notes||'',date:r.transaction_date},i=_txs.findIndex(x=>x.id===t.id); if(i>=0)_txs[i]=t; else _txs.unshift(t);} recalc(); savePersist();}
 function rtBill(p){if(p.eventType==='DELETE')_bills=_bills.filter(b=>b.id!==p.old.id); else{var r=p.new,b={id:r.id,name:r.name,val:num(r.amount),dia:r.due_day,cat:r.category,rec:r.recurrence,paid:!!r.is_paid},i=_bills.findIndex(x=>x.id===b.id); if(i>=0)_bills[i]=b; else _bills.push(b);} recalc(); savePersist();}
 function rtGoal(p){if(p.eventType==='DELETE')_goals=_goals.filter(g=>g.id!==p.old.id); else{var r=p.new,g={id:r.id,name:r.name,emoji:r.emoji,alvo:num(r.target_amount),atual:num(r.current_amount),prazo:r.deadline_months},i=_goals.findIndex(x=>x.id===g.id); if(i>=0)_goals[i]=g; else _goals.push(g);} recalc(); savePersist();}
@@ -1506,13 +1521,22 @@ function skipMigration(){el('modalMigrate').classList.remove('open'); localStora
    CALCULATIONS
 ═════════════════════════════════════════════════════════════ */
 function sal(){return clamp(el('salaryInput')?el('salaryInput').value:0,0);}
-function catVal(c){return c.manual!=null?c.manual:(sal()*c.pct/100);}
-function totalCats(){return _cats.reduce((a,c)=>a+catVal(c),0);}
+/* ── SOBRA (leftover bucket) ────────────────────────────────────
+   The "Sobra do mês" is a special, automatic category. Its value is
+   whatever is left of the salary after every OTHER allocation, the
+   spending (pix/despesas) and the paid bills (entradas add back).
+   Because of this, "Saldo disponível este mês" no longer reads zero
+   when the whole salary is distributed — it mirrors the sobra. */
+function sobraCat(){return _cats.find(function(c){return c&&c.sobra;});}
+function catVal(c){ if(c&&c.sobra) return sobraValue(); return c.manual!=null?c.manual:(sal()*c.pct/100); }
+function baseCats(){return _cats.filter(function(c){return !c.sobra;}).reduce(function(a,c){return a+catVal(c);},0);}
+function sobraValue(){return sal()-baseCats()-totalTxOut()-totalBillsPaid()+totalTxIn();}
+function totalCats(){return baseCats();} /* sobra is free balance, not a committed allocation */
 function totalTxOut(){return _txs.filter(t=>t.tipo!=='entrada').reduce((a,t)=>a+t.val,0);}
 function totalTxIn(){return _txs.filter(t=>t.tipo==='entrada').reduce((a,t)=>a+t.val,0);}
 function totalBillsPaid(){return _bills.filter(b=>b.paid).reduce((a,b)=>a+b.val,0);}
 function totalBillsPend(){return _bills.filter(b=>!b.paid).reduce((a,b)=>a+b.val,0);}
-function saldoLivre(){return sal()-totalCats()-totalTxOut()-totalBillsPaid()+totalTxIn();}
+function saldoLivre(){return sobraValue();}
 
 function onSalaryChange(){
   recalc(); savePersist();
@@ -1526,16 +1550,19 @@ function recalc(light){
   var pctCommit=s>0?(committed/s*100):0;
   var pctSave=s>0?(saldo/s*100):0;
 
-  // Hero balance
+  // Hero balance — mirrors the "Sobra do mês" category when it exists
+  var hasSobra=!!sobraCat();
   var hb=el('heroBalance');
   if(hb){
-    hb.className='hero-balance mono'+(saldo<0?' neg':(s>0&&saldo<s*0.08?' warn':''));
+    hb.className='hero-balance mono'+(saldo<0?' neg':((!hasSobra&&s>0&&saldo<s*0.08)?' warn':''));
     var abs=Math.abs(saldo), parts=abs.toFixed(2).split('.');
     setEl('hbInt',(saldo<0?'−':'')+Number(parts[0]).toLocaleString('pt-BR'));
     setEl('hbDec',','+parts[1]);
   }
+  var heroLabel=el('heroLabel');
+  if(heroLabel)heroLabel.textContent=hasSobra?'Sobra disponível este mês':'Saldo disponível este mês';
   var heroDelta=el('heroDelta');
-  if(heroDelta)heroDelta.innerHTML=s>0?('<span class="mono c-'+(pctSave>=0?'green':'red')+'">'+fmtPct(pctSave)+'</span> do salário disponível · comprometido '+fmtPct(Math.min(100,pctCommit))):'Defina seu salário para começar';
+  if(heroDelta)heroDelta.innerHTML=s>0?('<span class="mono c-'+(pctSave>=0?'green':'red')+'">'+fmtPct(pctSave)+'</span> '+(hasSobra?'guardado como sobra':'do salário disponível')+' · comprometido '+fmtPct(Math.min(100,pctCommit))):'Defina seu salário para começar';
 
   // Flow meter (stacked, capped at 100%)
   var aW=s>0?Math.max(0,cats/s*100):0, spW=s>0?Math.max(0,txOut/s*100):0, bW=s>0?Math.max(0,billsPaid/s*100):0;
@@ -1561,6 +1588,7 @@ function recalc(light){
 
   // Categories tab
   setEl('catN',_cats.length); setEl('catPct',fmtPct(s>0?cats/s*100:0)); setEl('catVal',fmt(cats));
+  var bs=el('btnSobra'); if(bs)bs.style.display=sobraCat()?'none':'';
 
   // Investments tab
   var invTotal=_invests.reduce((a,i)=>a+i.invested,0), invCur=_invests.reduce((a,i)=>a+i.current,0), invGain=invCur-invTotal;
@@ -1828,6 +1856,12 @@ function addCat(){
   ['newCatName','newCatPct','newCatManual','newCatEmoji'].forEach(id=>el(id).value='');
   toggleAddCat(); recalc(); showToast((manual!=null?'Categoria fixa ':'Categoria ')+name+' adicionada','ok');
 }
+function createSobra(){
+  if(sobraCat()){ showToast('Você já tem a categoria "Sobra do mês"','info'); return; }
+  var c={id:uuid(),name:'Sobra do mês',pct:0,emoji:'💰',manual:null,sobra:true};
+  _cats.push(c); dbSaveCat(c); recalc();
+  showToast('Sobra do mês criada — tudo o que sobrar fica guardado aqui','ok');
+}
 function autoDistribute(){
   var total=_cats.reduce((s,c)=>s+c.pct,0);
   if(!total)return showToast('Nenhuma porcentagem definida','warn');
@@ -1846,9 +1880,22 @@ async function delCat(id){
 }
 function renderCats(){
   var grid=el('catsGrid'); if(!grid)return;
-  if(!_cats.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-ic">📊</div><div class="empty-title">Sem categorias</div><div class="empty-desc">Toque em "Nova" para alocar parte do salário</div></div>'; return;}
+  if(!_cats.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-ic">📊</div><div class="empty-title">Sem categorias</div><div class="empty-desc">Toque em "Nova" para alocar parte do salário, ou em "Sobra do mês" para guardar o que sobrar</div></div>'; return;}
   var s=sal();
-  grid.innerHTML=_cats.map((c,i)=>{
+  // normal categories first, the automatic "Sobra" always last
+  var ordered=_cats.filter(function(c){return !c.sobra;}).concat(_cats.filter(function(c){return c.sobra;}));
+  grid.innerHTML=ordered.map(function(c,i){
+    if(c.sobra){
+      var sv=sobraValue(), neg=sv<0, prc=s>0?Math.abs(sv)/s*100:0, fillc=Math.min(100,Math.max(0,prc));
+      return '<div class="cat-card sobra'+(neg?' neg':'')+'">'+
+        '<div class="cat-head"><div class="cat-ic">'+esc(c.emoji||'💰')+'</div>'+
+        '<div style="flex:1;min-width:0"><div class="cat-name">'+esc(c.name)+'</div><div class="cat-type"><span class="sobra-tag">⟳ automático</span></div></div>'+
+        '<button class="row-del" onclick="delCat(\''+c.id+'\')" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3m-4 0h4"/></svg></button></div>'+
+        '<div class="sobra-note">'+(neg?'Você passou do salário em <strong>'+fmt(-sv)+'</strong>. Reveja categorias, gastos e contas.':'Tudo o que sobra depois de distribuir o salário fica guardado aqui — e é exatamente o valor que aparece em <strong>"Sobra disponível este mês"</strong> na Visão.')+'</div>'+
+        '<div class="cat-val mono">'+fmt(sv)+'</div>'+
+        '<div class="cat-sub">'+(s>0?(neg?'−':'')+prc.toFixed(1)+'% do salário':'defina o salário para calcular')+'</div>'+
+        '<div class="bar"><div class="bar-fill" style="width:'+fillc+'%;background:linear-gradient(90deg,var(--green),#7be0b0)"></div></div></div>';
+    }
     var v=catVal(c), pr=s>0?v/s*100:c.pct, fill=Math.min(100,Math.max(0,pr)), color=COLORS[i%COLORS.length];
     return '<div class="cat-card"><div class="cat-head"><div class="cat-ic">'+esc(c.emoji)+'</div><div style="flex:1;min-width:0"><div class="cat-name">'+esc(c.name)+'</div><div class="cat-type">'+(c.manual!=null?'valor fixo':'porcentagem')+'</div></div><button class="row-del" onclick="delCat(\''+c.id+'\')" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3m-4 0h4"/></svg></button></div><div class="cat-inputs"><input type="number" class="mono" value="'+c.pct.toFixed(1)+'" min="0" max="100" step="0.1" oninput="catEditPct(\''+c.id+'\',this.value)" onchange="catCommit(\''+c.id+'\')" aria-label="Porcentagem"><span class="sep">% ou</span><input type="number" class="mono" placeholder="R$ fixo" min="0" step="0.01" value="'+(c.manual!=null?c.manual.toFixed(2):'')+'" oninput="catEditManual(\''+c.id+'\',this.value)" onchange="catCommit(\''+c.id+'\')" aria-label="Valor fixo"></div><div class="cat-val mono">'+fmt(v)+'</div><div class="cat-sub">'+pr.toFixed(1)+'% do salário</div><div class="bar"><div class="bar-fill" style="width:'+fill+'%;background:'+color+'"></div></div></div>';
   }).join('');
@@ -1937,13 +1984,14 @@ function renderInvest(){
 ═════════════════════════════════════════════════════════════ */
 function renderDonut(){
   var wrap=el('donutWrap'); if(!wrap)return;
-  var s=sal(), cfgFree=el('cfgFreeGraph')&&el('cfgFreeGraph').checked, slices=[];
-  _cats.forEach((c,i)=>{var v=catVal(c); if(v>0)slices.push({label:c.emoji+' '+c.name,value:v,color:COLORS[i%COLORS.length]});});
+  var s=sal(), cfgFree=el('cfgFreeGraph')&&el('cfgFreeGraph').checked, slices=[], ci=0;
+  _cats.forEach(function(c){ if(c.sobra)return; var v=catVal(c); if(v>0){slices.push({label:c.emoji+' '+c.name,value:v,color:COLORS[ci%COLORS.length]}); ci++;} });
   var txOut=totalTxOut(); if(txOut>0)slices.push({label:'💸 Pix/Despesas',value:txOut,color:'#5b8def'});
   var billsPaid=totalBillsPaid(); if(billsPaid>0)slices.push({label:'🧾 Contas pagas',value:billsPaid,color:'#f2aa5b'});
-  var used=slices.reduce((a,sl)=>a+sl.value,0);
-  var saldo=s-used+totalTxIn();
-  if(cfgFree&&saldo>0)slices.push({label:'💰 Saldo livre',value:saldo,color:'#2f3a4d'});
+  var committed=slices.reduce((a,sl)=>a+sl.value,0);
+  var hasSobra=!!sobraCat(), sobra=sobraValue();
+  if(hasSobra&&sobra>0.005)slices.push({label:'💰 Sobra (guardado)',value:sobra,color:'#43d6a0'});
+  else{ var saldo=s-committed+totalTxIn(); if(cfgFree&&saldo>0)slices.push({label:'💰 Saldo livre',value:saldo,color:'#2f3a4d'}); }
   if(!slices.length){wrap.innerHTML='<div class="empty" style="width:100%"><div class="empty-ic">📊</div><div class="empty-title">Sem dados para o gráfico</div><div class="empty-desc">Defina o salário e adicione categorias ou gastos</div></div>'; return;}
   var total=slices.reduce((a,sl)=>a+sl.value,0), cx=80, cy=80, r=68, ri=42, sa=-Math.PI/2, paths='';
   slices.forEach((sl,idx)=>{
@@ -1954,9 +2002,9 @@ function renderDonut(){
     paths+='<path class="donut-slice" style="animation-delay:'+(idx*0.06)+'s" d="M'+xi1+','+yi1+' L'+x1+','+y1+' A'+r+','+r+' 0 '+lg+',1 '+x2+','+y2+' L'+xi2+','+yi2+' A'+ri+','+ri+' 0 '+lg+',0 '+xi1+','+yi1+' Z" fill="'+sl.color+'"/>';
     sa=ea;
   });
-  var pct=s>0?((s-saldo)/s*100).toFixed(0):0;
+  var pct=s>0?Math.round(committed/s*100):0;
   var legend=slices.map(sl=>{var p=(sl.value/total*100).toFixed(1); return '<div class="leg"><span class="leg-dot" style="background:'+sl.color+'"></span><div style="flex:1;min-width:0"><div class="leg-name">'+sl.label+'</div><div class="leg-pct mono">'+fmt(sl.value)+' ('+p+'%)</div></div></div>';}).join('');
-  wrap.innerHTML='<svg class="donut-svg" width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Distribuição do salário"><defs><style>.donut-slice{transform-origin:80px 80px;animation:sliceIn .6s var(--ease) backwards}</style></defs>'+paths+'<text x="'+cx+'" y="'+(cy-5)+'" text-anchor="middle" fill="var(--text-3)" font-family="Geist Mono" font-size="8.5">USADO</text><text x="'+cx+'" y="'+(cy+11)+'" text-anchor="middle" fill="var(--acc)" font-family="Geist Mono" font-size="12" font-weight="600">'+pct+'%</text></svg><div class="donut-legend">'+legend+'</div>';
+  wrap.innerHTML='<svg class="donut-svg" width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Distribuição do salário"><defs><style>.donut-slice{transform-origin:80px 80px;animation:sliceIn .6s var(--ease) backwards}</style></defs>'+paths+'<text x="'+cx+'" y="'+(cy-5)+'" text-anchor="middle" fill="var(--text-3)" font-family="Geist Mono" font-size="7.5">GASTO</text><text x="'+cx+'" y="'+(cy+11)+'" text-anchor="middle" fill="var(--acc)" font-family="Geist Mono" font-size="12" font-weight="600">'+pct+'%</text></svg><div class="donut-legend">'+legend+'</div>';
 }
 
 /* ═════════════════════════════════════════════════════════════
@@ -1992,21 +2040,28 @@ function renderCalendar(){
   setEl('calTitle',monthLabel(_calRef));
   var now=new Date(), isCurMonth=(y===now.getFullYear()&&m===now.getMonth()), todayD=now.getDate();
   var first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  var PAYDAY=5, salaryAmt=sal();
   var byDay={}; _bills.forEach(b=>{(byDay[b.dia]=byDay[b.dia]||[]).push(b);});
   var html=DOW.map(d=>'<div class="cal-dow">'+d+'</div>').join('');
   for(var i=0;i<first;i++)html+='<div class="cal-cell empty"></div>';
   for(var d=1;d<=days;d++){
-    var bills=byDay[d]||[], evts='';
-    bills.slice(0,2).forEach(b=>{
-      var cls; if(b.paid)cls='paid'; else if(isCurMonth&&d<todayD)cls='late'; else if(isCurMonth&&d-todayD>=0&&d-todayD<=3)cls='soon'; else cls='ok';
-      evts+='<div class="cal-evt '+cls+'" title="'+esc(b.name)+' · '+fmt(b.val)+'">'+esc(b.name)+'</div>';
+    var bills=byDay[d]||[], evts='', cls='cal-cell';
+    if(isCurMonth&&d===todayD)cls+=' today';
+    var isPay=(d===PAYDAY&&salaryAmt>0);
+    if(isPay){ cls+=' payday'; evts+='<div class="cal-evt salary" title="Salário cai hoje · '+fmt(salaryAmt)+'">💰 Salário</div>'; }
+    var shown=isPay?1:2;
+    bills.slice(0,shown).forEach(function(b){
+      var c; if(b.paid)c='paid'; else if(isCurMonth&&d<todayD)c='late'; else if(isCurMonth&&d-todayD>=0&&d-todayD<=3)c='soon'; else c='ok';
+      evts+='<div class="cal-evt '+c+'" title="'+esc(b.name)+' · '+fmt(b.val)+'">'+esc(b.name)+'</div>';
     });
-    if(bills.length>2)evts+='<div class="cal-more">+'+(bills.length-2)+'</div>';
-    html+='<div class="cal-cell'+(isCurMonth&&d===todayD?' today':'')+'"><div class="cal-num">'+d+'</div>'+evts+'</div>';
+    var extra=bills.length-shown;
+    if(extra>0)evts+='<div class="cal-more">+'+extra+'</div>';
+    html+='<div class="'+cls+'"><div class="cal-num">'+d+'</div>'+evts+'</div>';
   }
   grid.innerHTML=html;
   var pend=_bills.filter(b=>!b.paid).reduce((a,b)=>a+b.val,0), paid=_bills.filter(b=>b.paid).reduce((a,b)=>a+b.val,0);
   setEl('calBillN',_bills.length); setEl('calBillPend',fmt(pend)); setEl('calBillPaid',fmt(paid));
+  setEl('calSalary',salaryAmt>0?fmt(salaryAmt):'—');
 }
 
 /* ═════════════════════════════════════════════════════════════
@@ -2041,6 +2096,7 @@ function buildNotifications(){
   var list=[], today=new Date().getDate();
   _bills.forEach(b=>{if(b.paid)return; var diff=b.dia-today; if(diff<0)list.push({id:'bill-late-'+b.id,title:'Conta vencida',msg:(BILL_ICON[b.cat]||'📋')+' '+b.name+' venceu (dia '+b.dia+')',type:'late'}); else if(diff<=3)list.push({id:'bill-soon-'+b.id,title:'Conta vencendo',msg:(BILL_ICON[b.cat]||'📋')+' '+b.name+' vence '+(diff===0?'hoje':'em '+diff+'d'),type:'soon'});});
   _goals.forEach(g=>{if(g.alvo<=0)return; var pct=g.atual/g.alvo*100; if(g.atual>=g.alvo)list.push({id:'goal-done-'+g.id,title:'Meta concluída',msg:g.emoji+' '+g.name+' alcançou 100%',type:'good'}); else if(pct>=80)list.push({id:'goal-near-'+g.id,title:'Meta quase lá',msg:g.emoji+' '+g.name+' está em '+pct.toFixed(0)+'%',type:'info'});});
+  var s=sal(); if(s>0){ var dd=5-today; if(dd>=0&&dd<=3){var nd=new Date(); list.push({id:'salary-'+nd.getFullYear()+'-'+nd.getMonth(),title:'Salário a caminho',msg:'💰 Seu salário cai '+(dd===0?'hoje (dia 5)':'em '+dd+'d (dia 5)')+' — '+fmt(s),type:'good'});} }
   renderNotifs(list.filter(n=>!_dismissedNotifs[n.id]));
 }
 function renderNotifs(notifs){
@@ -2054,6 +2110,7 @@ function renderNotifs(notifs){
 function dismissAllNotifs(){
   _bills.forEach(b=>{_dismissedNotifs['bill-late-'+b.id]=true; _dismissedNotifs['bill-soon-'+b.id]=true;});
   _goals.forEach(g=>{_dismissedNotifs['goal-done-'+g.id]=true; _dismissedNotifs['goal-near-'+g.id]=true;});
+  var nd=new Date(); _dismissedNotifs['salary-'+nd.getFullYear()+'-'+nd.getMonth()]=true;
   saveDismissed(); buildNotifications(); showToast('Notificações limpas','ok');
 }
 
