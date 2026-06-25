@@ -586,6 +586,62 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 ════════════════════════════════════════════════════════════ */
 .bottom-nav{ display:none; }
 .fab{ display:none; }
+.mobile-cfg-btn{ display:none; }
+
+/* ════════════════════════════════════════════════════════════
+   MAIS (MORE) BOTTOM SHEET — secondary navigation on mobile
+════════════════════════════════════════════════════════════ */
+.more-overlay{
+  position:fixed; inset:0;
+  z-index:calc(var(--z-bottomnav) + 10);
+  background:rgba(0,0,0,.52);
+  backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s var(--ease);
+}
+.more-overlay.open{ opacity:1; pointer-events:auto; }
+.more-sheet{
+  position:fixed; left:0; right:0; bottom:0;
+  z-index:calc(var(--z-bottomnav) + 11);
+  background:var(--bg-soft);
+  border:1px solid var(--line-2); border-bottom:none;
+  border-radius:26px 26px 0 0;
+  padding:0 16px calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(110%);
+  transition:transform .42s var(--spring);
+  will-change:transform;
+}
+.more-sheet.open{ transform:translateY(0); }
+.more-handle{
+  width:44px; height:5px; border-radius:3px;
+  background:var(--line-2); margin:14px auto 18px;
+  cursor:pointer;
+}
+.more-sheet-label{
+  font-size:11px; font-weight:700; color:var(--text-3);
+  text-transform:uppercase; letter-spacing:.13em;
+  margin-bottom:14px; padding:0 4px;
+}
+.more-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.more-item{
+  display:flex; flex-direction:column; align-items:center; gap:9px;
+  padding:15px 8px 13px; border-radius:18px;
+  background:var(--panel-2); border:1px solid var(--line);
+  cursor:pointer; color:var(--text-2);
+  font-size:11px; font-weight:600; text-align:center; line-height:1.35;
+  transition:background var(--tf) var(--ease),color var(--tf) var(--ease),border-color var(--tf) var(--ease),transform var(--tf) var(--spring);
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  border:none; width:100%; font-family:inherit;
+}
+.more-item:active{ transform:scale(.93); }
+.more-item.active{ background:var(--acc-soft); color:var(--acc); outline:1px solid var(--acc-bd); }
+.more-item-ic{
+  width:44px; height:44px; border-radius:14px;
+  display:grid; place-items:center;
+  background:var(--panel-3); font-size:1.3rem;
+}
+.more-item.active .more-item-ic{ background:color-mix(in srgb,var(--acc) 18%,transparent); }
+.more-item-ic svg{ width:21px; height:21px; }
 
 /* ════════════════════════════════════════════════════════════
    AUTH
@@ -621,18 +677,89 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 @media(max-width:1023px){
   .shell{ grid-template-columns:1fr; }
   .sidebar{ display:none; }
-  .content{ padding:6px 16px 110px; }
-  .topbar{ padding:14px 16px; }
-  .searchbar{ min-width:0; padding:9px; }
+  .content{ padding:6px 14px calc(86px + env(safe-area-inset-bottom)); }
+  .topbar{ padding:12px 14px; gap:8px; }
+  .searchbar{ min-width:0; padding:9px 11px; }
   .searchbar .sb-text,.searchbar kbd{ display:none; }
   .kpi-grid{ grid-template-columns:repeat(2,1fr); }
-  .bottom-nav{ display:flex; position:fixed; left:0; right:0; bottom:0; z-index:var(--z-bottomnav); align-items:center; justify-content:space-around; padding:8px 8px calc(8px + env(safe-area-inset-bottom)); background:var(--glass); border-top:1px solid var(--line); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
-  .bn-item{ display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; color:var(--text-3); font-size:9.5px; font-weight:600; cursor:pointer; padding:5px 10px; border-radius:var(--r-sm); transition:color var(--tf) var(--ease); flex:1; }
-  .bn-item svg{ width:21px; height:21px; }
+
+  /* ── Bottom Nav ── */
+  .bottom-nav{
+    display:flex; position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:var(--z-bottomnav);
+    align-items:center; justify-content:space-around;
+    padding:4px 2px calc(4px + env(safe-area-inset-bottom));
+    background:var(--glass);
+    border-top:1px solid var(--line);
+    backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  }
+  .bn-item{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; color:var(--text-3);
+    font-size:9px; font-weight:600; cursor:pointer;
+    padding:7px 5px 5px; border-radius:12px;
+    transition:color var(--tf) var(--ease),background var(--tf) var(--ease);
+    flex:1; min-height:52px; justify-content:center;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+    position:relative;
+  }
+  .bn-item:active{ background:var(--panel-2); }
+  .bn-item svg{ width:22px; height:22px; }
   .bn-item.active{ color:var(--acc); }
-  .fab{ display:grid; place-items:center; width:54px; height:54px; border-radius:18px; border:none; margin-top:-28px; background:linear-gradient(140deg,var(--g1),var(--g2)); color:var(--on-acc); box-shadow:var(--sh-acc); cursor:pointer; transition:transform var(--tf) var(--spring); }
-  .fab:active{ transform:scale(.92); }
+  .bn-item.active::after{
+    content:''; position:absolute; bottom:3px; left:50%; transform:translateX(-50%);
+    width:18px; height:3px; border-radius:2px;
+    background:var(--acc); opacity:.7;
+  }
+  .bn-item-more svg{ opacity:.75; }
+
+  /* ── Floating Action Button ── */
+  .fab{
+    display:grid; place-items:center;
+    position:fixed; right:18px;
+    bottom:calc(72px + env(safe-area-inset-bottom));
+    z-index:var(--z-fab);
+    width:52px; height:52px;
+    border-radius:16px; border:none;
+    background:linear-gradient(140deg,var(--g1),var(--g2));
+    color:var(--on-acc);
+    box-shadow:0 6px 22px -6px color-mix(in srgb,var(--g2) 65%,transparent),0 2px 8px rgba(0,0,0,.25);
+    cursor:pointer;
+    transition:transform var(--tf) var(--spring),box-shadow var(--tf) var(--ease);
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .fab:active{ transform:scale(.88); box-shadow:0 3px 12px -4px color-mix(in srgb,var(--g2) 50%,transparent); }
   .fab svg{ width:24px; height:24px; }
+
+  /* ── Mobile Settings icon in topbar ── */
+  .mobile-cfg-btn{ display:grid; }
+
+  /* ── Row items ── */
+  .row-item{ padding:12px 13px; gap:10px; }
+  .row-ic{ width:38px; height:38px; border-radius:11px; }
+
+  /* ── Cards ── */
+  .card{ padding:16px; }
+  .cat-card{ padding:15px; }
+  .cat-inputs{ flex-wrap:wrap; }
+  .cat-inputs input{ flex:1; min-width:80px; }
+
+  /* ── Modals: slide up from bottom on mobile ── */
+  .modal-overlay{ align-items:flex-end; padding:0; }
+  .modal{
+    border-radius:24px 24px 0 0;
+    padding:22px 18px calc(24px + env(safe-area-inset-bottom));
+    max-height:92dvh; max-width:100%;
+    transform:translateY(30px) scale(1);
+  }
+  .modal-overlay.open .modal{ transform:translateY(0) scale(1); }
+
+  /* ── Hero section mobile ── */
+  .hero{ padding:18px 16px 20px; }
+  .hero-balance{ font-size:clamp(2.1rem,9vw,3rem); }
+  .flow-legend{ gap:8px; }
+  .fl-item{ gap:8px; }
 }
 @media(max-width:560px){
   .form-grid,.form-grid-3,.form-grid-4{ grid-template-columns:1fr; }
@@ -643,6 +770,18 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
   .cal-evt{ display:none; }
   .cal-cell::after{ content:''; }
   .donut-svg{ margin:0 auto; }
+  /* Category cards: single column on small phones */
+  .cats-grid{ grid-template-columns:1fr; }
+  .goals-grid{ grid-template-columns:1fr; }
+  /* Better filter row on mobile */
+  .filter-row{ gap:7px; }
+  .seg{ max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* Better row items on tiny screens */
+  .row-act{ gap:4px; }
+  .pay-btn{ padding:6px 9px; font-size:11.5px; }
+  /* Topbar on small screens */
+  .topbar{ gap:6px; }
+  .month-chip{ font-size:11px; padding:6px 10px; }
 }
 @media(max-width:400px){
   .kpi-grid,.stat-grid{ grid-template-columns:1fr; }
@@ -749,6 +888,10 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
       </button>
       <button class="iconbtn" onclick="toggleTheme()" aria-label="Alternar tema">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <!-- Mobile-only: access to Config + More pages -->
+      <button class="iconbtn mobile-cfg-btn" id="mobileCfgBtn" onclick="openMoreSheet()" aria-label="Mais opções" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
       </button>
     </header>
 
@@ -1060,6 +1203,44 @@ input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.5); cursor:p
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bottom-nav" id="bottomNav" aria-label="Navegação"></nav>
 
+<!-- FAB — Nova Transação (mobile) -->
+<button class="fab" id="fabMain" onclick="openTx('pix')" aria-label="Nova transação" style="display:none">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- MORE SHEET overlay + drawer (mobile secondary navigation) -->
+<div class="more-overlay" id="moreOverlay" onclick="closeMoreSheet()"></div>
+<div class="more-sheet" id="moreSheet" role="dialog" aria-label="Mais seções">
+  <div class="more-handle" onclick="closeMoreSheet()" aria-label="Fechar"></div>
+  <div class="more-sheet-label">Mais seções</div>
+  <div class="more-grid" id="moreGrid">
+    <button class="more-item" data-page="investimentos" onclick="switchPageFromMore('investimentos')">
+      <div class="more-item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+      Investimentos
+    </button>
+    <button class="more-item" data-page="calendario" onclick="switchPageFromMore('calendario')">
+      <div class="more-item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      Calendário
+    </button>
+    <button class="more-item" data-page="historico" onclick="switchPageFromMore('historico')">
+      <div class="more-item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg></div>
+      Histórico
+    </button>
+    <button class="more-item" data-page="config" onclick="switchPageFromMore('config')">
+      <div class="more-item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m2.12 2.12l4.24 4.24M1 12h6m6 0h6m-15.78 7.78l4.24-4.24m2.12-2.12l4.24-4.24"/></svg></div>
+      Configurações
+    </button>
+    <button class="more-item" onclick="openTx('pix');closeMoreSheet()">
+      <div class="more-item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+      Nova Transação
+    </button>
+    <button class="more-item" onclick="openCmdk();closeMoreSheet()">
+      <div class="more-item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+      Busca (⌘K)
+    </button>
+  </div>
+</div>
+
 <!-- ═══════════ DROPDOWNS ═══════════ -->
 <div class="drop" id="profileDrop" role="menu">
   <div class="drop-head"><div><div class="dh-mail" id="dropMail">—</div><div class="dh-since" id="dropSince"></div></div></div>
@@ -1356,6 +1537,9 @@ async function onLogin(user){
   setEl('dropMail',user.email); setEl('dropSince','Desde '+new Date(user.created_at).toLocaleDateString('pt-BR'));
   setEl('cfgAccMail',user.email);
   el('sideProfile').style.display='flex'; el('notifBtn').style.display='grid';
+  // Show mobile-only FAB and More button (clear inline style → CSS media query takes over)
+  var fab=el('fabMain'); if(fab)fab.style.display='';
+  var mcb=el('mobileCfgBtn'); if(mcb)mcb.style.display='';
   showSkeletons();
   await ensureProfile(user);
   await loadAll();
@@ -1366,6 +1550,8 @@ function onLogout(){
   _cats=[]; _txs=[]; _bills=[]; _goals=[]; _invests=[]; _snaps=[];
   teardownRealtime();
   el('sideProfile').style.display='none'; el('notifBtn').style.display='none';
+  var fab=el('fabMain'); if(fab)fab.style.display='none';
+  var mcb=el('mobileCfgBtn'); if(mcb)mcb.style.display='none';
   if(el('salaryInput'))el('salaryInput').value='0';
   renderAll(); updateSyncDot();
   el('authOverlay').classList.remove('hidden');
@@ -1604,19 +1790,83 @@ function calcYield(){
 /* ═════════════════════════════════════════════════════════════
    NAVIGATION
 ═════════════════════════════════════════════════════════════ */
+// Pages accessible directly from mobile bottom nav
+var MOBILE_NAV=['visao','transacoes','categorias','contas','metas'];
+// Pages only in the "Mais" drawer (desktop sidebar still shows all)
+var MORE_PAGES=['investimentos','calendario','historico','config'];
+
 function initNav(){
   var nav=el('navMain'), bot=el('bottomNav');
-  if(nav)nav.innerHTML=NAV.map(n=>'<button class="nav-item '+(n.id==='visao'?'active':'')+'" data-page="'+n.id+'" onclick="switchPage(\''+n.id+'\')">'+n.icon+'<span>'+n.label+'</span></button>').join('');
-  // Mobile bottom nav: keep to the 5 most-used + a "more" via Configurações already in list.
-  var mobile=['visao','transacoes','contas','metas','config'];
-  if(bot)bot.innerHTML=NAV.filter(n=>mobile.indexOf(n.id)>=0).map(n=>'<button class="bn-item '+(n.id==='visao'?'active':'')+'" data-page="'+n.id+'" onclick="switchPage(\''+n.id+'\')" aria-label="'+n.label+'">'+n.icon+'<span>'+n.label+'</span></button>').join('');
+
+  // ── Desktop sidebar: all NAV items ──────────────────────────
+  if(nav)nav.innerHTML=NAV.map(n=>
+    '<button class="nav-item '+(n.id==='visao'?'active':'')+'" data-page="'+n.id+'" onclick="switchPage(\''+n.id+'\')">'
+    +n.icon+'<span>'+n.label+'</span></button>'
+  ).join('');
+
+  // ── Mobile bottom nav: 5 primary pages + "Mais" button ─────
+  if(bot){
+    var moreIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>';
+    var primaryHtml=NAV
+      .filter(n=>MOBILE_NAV.indexOf(n.id)>=0)
+      .sort((a,b)=>MOBILE_NAV.indexOf(a.id)-MOBILE_NAV.indexOf(b.id))
+      .map(n=>
+        '<button class="bn-item '+(n.id==='visao'?'active':'')+'" data-page="'+n.id+'"'
+        +' onclick="switchPage(\''+n.id+'\')" aria-label="'+n.label+'">'
+        +n.icon+'<span>'+n.label+'</span></button>'
+      ).join('');
+    var maisBtn='<button class="bn-item bn-item-more" id="bnMore" onclick="openMoreSheet()" aria-label="Mais">'
+      +moreIcon+'<span>Mais</span></button>';
+    bot.innerHTML=primaryHtml+maisBtn;
+  }
+
+  // Update "Mais" items active states in the drawer
+  updateMoreGridActive();
 }
+
+function updateMoreGridActive(){
+  var grid=el('moreGrid'); if(!grid)return;
+  grid.querySelectorAll('.more-item[data-page]').forEach(function(btn){
+    btn.classList.toggle('active',btn.dataset.page===_currPage);
+  });
+  var bnMore=el('bnMore');
+  if(bnMore)bnMore.classList.toggle('active',MORE_PAGES.indexOf(_currPage)>=0);
+}
+
 function switchPage(id){
   if(!NAV_META[id])return;
-  if(_currPage!==id){var cur=el('page-'+_currPage); if(cur)cur.classList.remove('active'); var nxt=el('page-'+id); if(nxt)nxt.classList.add('active'); _currPage=id;}
+  if(_currPage!==id){
+    var cur=el('page-'+_currPage); if(cur)cur.classList.remove('active');
+    var nxt=el('page-'+id); if(nxt)nxt.classList.add('active');
+    _currPage=id;
+  }
   setEl('pageTitle',NAV_META[id].title); setEl('pageSub',NAV_META[id].sub);
-  document.querySelectorAll('.nav-item,.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
-  el('content').scrollTop=0; try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}
+  // Update sidebar nav-items
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  // Update bottom nav items (primary)
+  document.querySelectorAll('.bn-item:not(.bn-item-more)').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  // "Mais" button highlights when a secondary page is active
+  var bnMore=el('bnMore');
+  if(bnMore)bnMore.classList.toggle('active',MORE_PAGES.indexOf(id)>=0);
+  // Update active state inside the More drawer
+  updateMoreGridActive();
+  el('content').scrollTop=0;
+  try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}
+}
+
+/* ── More Sheet (mobile secondary navigation) ──────────────── */
+function openMoreSheet(){
+  el('moreOverlay').classList.add('open');
+  el('moreSheet').classList.add('open');
+  updateMoreGridActive();
+}
+function closeMoreSheet(){
+  el('moreOverlay').classList.remove('open');
+  el('moreSheet').classList.remove('open');
+}
+function switchPageFromMore(id){
+  closeMoreSheet();
+  setTimeout(function(){ switchPage(id); }, 60);
 }
 
 /* ═════════════════════════════════════════════════════════════
@@ -2237,7 +2487,7 @@ function onKeydown(e){
     else if(e.key==='Enter'){e.preventDefault(); cmdkRun(_cmdkIdx);}
     return;
   }
-  if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); document.querySelectorAll('.drop.open').forEach(d=>d.classList.remove('open')); if(window._confirmResolve){window._confirmResolve(false); window._confirmResolve=null;} if(window._promptResolve){window._promptResolve(null); window._promptResolve=null;} return;}
+  if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); document.querySelectorAll('.drop.open').forEach(d=>d.classList.remove('open')); closeMoreSheet(); if(window._confirmResolve){window._confirmResolve(false); window._confirmResolve=null;} if(window._promptResolve){window._promptResolve(null); window._promptResolve=null;} return;}
   if(!_user||isTyping())return;
   if(e.key==='n'||e.key==='N'){e.preventDefault(); openTx('pix');}
 }
@@ -2247,6 +2497,9 @@ function onKeydown(e){
 ═════════════════════════════════════════════════════════════ */
 async function initApp(){
   loadTheme(); loadAccent(); loadDismissed(); initNav();
+  // Mobile-only controls start hidden until login
+  var fab=el('fabMain'); if(fab)fab.style.display='none';
+  var mcb=el('mobileCfgBtn'); if(mcb)mcb.style.display='none';
   setEl('monthChip',monthLabel(new Date()));
   if(el('txDate'))el('txDate').value=todayISO();
   el('shell').classList.add('ready');
