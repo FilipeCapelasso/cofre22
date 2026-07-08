@@ -627,6 +627,7 @@ const SB={
   updateUser:(body)=>SB.call('/auth/v1/user',{method:'PUT',body}),
   get:(t,q='')=>SB.call('/rest/v1/'+t+(q?'?'+q+'&':'?')+'order=created_at.desc').then(r=>r||[]),
   ins:(t,d)=>SB.call('/rest/v1/'+t,{method:'POST',prefer:'return=representation',body:d}),
+  upsert:(t,d,onConflict)=>SB.call('/rest/v1/'+t+'?on_conflict='+encodeURIComponent(onConflict),{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:d}),
   upd:(t,id,d)=>SB.call('/rest/v1/'+t+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',prefer:'return=representation',body:d}),
   del:(t,id)=>SB.call('/rest/v1/'+t+'?id=eq.'+encodeURIComponent(id),{method:'DELETE'}),
   upsertProfile:(d)=>SB.call('/rest/v1/profiles',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:d}),
@@ -845,9 +846,25 @@ async function enterApp(){
   showSc('app');
   buildNav();
   await Promise.all([loadProfile(),sync(true)]);
+  await schemaSelfTest();    // verifica se o banco está completo e avisa se faltar algo
   initSelectedMonth();       // define o mês inicial (último visto ou atual)
   paintMonthLabel();
   await nav('dashboard');
+}
+
+/* Verifica, uma vez por sessão, se as tabelas essenciais existem.
+   Se algo faltar, mostra um aviso claro em vez de o app "engolir" os dados. */
+let _schemaChecked=false;
+async function schemaSelfTest(){
+  if(_schemaChecked)return;_schemaChecked=true;
+  const tables=['salary_months','movements','investments','debts','investment_contributions'];
+  const results=await Promise.allSettled(
+    tables.map(t=>SB.call('/rest/v1/'+t+'?select=id&limit=1'))
+  );
+  const missing=tables.filter((t,i)=>results[i].status==='rejected');
+  if(missing.length){
+    toast('Banco incompleto: falta a tabela "'+missing[0]+'". Rode o SQL de instalação no Supabase.','err');
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -897,14 +914,24 @@ async function sync(force=false){
   if(ST.syncing)return ST.syncing;               // reaproveita sync em andamento
   ST.syncing=(async()=>{
     if(!(await ensureSession()))return false;
-    try{
-      const [m,mv,iv,db,ct]=await Promise.all([
-        SB.get('salary_months'),SB.get('movements'),SB.get('investments'),SB.get('debts'),
-        SB.get('investment_contributions')
-      ]);
-      ST.months=m;ST.movs=mv;ST.invs=iv;ST.debts=db;ST.contribs=ct;ST.loaded=true;return true;
-    }catch(err){toast(friendly(err),'err');return false}
-    finally{ST.syncing=null}
+    // allSettled: se UMA tabela falhar (ex: tabela não criada), as demais
+    // ainda carregam — evita que o app inteiro fique vazio por um detalhe.
+    const [m,mv,iv,db,ct]=await Promise.allSettled([
+      SB.get('salary_months'),SB.get('movements'),SB.get('investments'),SB.get('debts'),
+      SB.get('investment_contributions')
+    ]);
+    const core=[m,mv,iv,db];
+    const firstFail=core.find(r=>r.status==='rejected');
+    if(firstFail){
+      // uma tabela essencial falhou → mostra o erro REAL para diagnóstico
+      const e=firstFail.reason;
+      const msg=(e&&e.message)||'erro desconhecido';
+      toast('Falha ao carregar dados: '+msg,'err');
+      ST.syncing=null;return false;
+    }
+    ST.months=m.value;ST.movs=mv.value;ST.invs=iv.value;ST.debts=db.value;
+    ST.contribs=ct.status==='fulfilled'?ct.value:[];   // aportes são opcionais
+    ST.loaded=true;ST.syncing=null;return true;
   })();
   return ST.syncing;
 }
@@ -940,14 +967,29 @@ function currentMonthMovs(){
   return row?ST.movs.filter(v=>v.salary_month_id===row.id):[];
 }
 /* garante que o mês exista no banco antes de vincular um dado a ele.
-   Chamado apenas quando o usuário efetivamente cria algo. */
+   • Race-safe: chamadas concorrentes reaproveitam a mesma promessa.
+   • Usa UPSERT (on_conflict user_id,month,year) → nunca duplica nem falha
+     por constraint; sempre devolve a linha canônica JÁ PERSISTIDA.
+   • Se não conseguir, LANÇA erro (o chamador não grava órfão). */
+let _ensuringMonth=null;
 async function ensureMonth(){
-  let row=currentMonthRow();
-  if(row)return row;
-  const r=await SB.ins('salary_months',{month:ST.sel.m,year:ST.sel.y,gross_amount:0,user_id:uid()});
-  row=r?.[0];
-  if(row)ST.months.unshift(row);
-  return row;
+  const existing=currentMonthRow();
+  if(existing)return existing;
+  if(_ensuringMonth)return _ensuringMonth;
+  _ensuringMonth=(async()=>{
+    // recheca depois de "adquirir" a trava
+    const again=currentMonthRow();
+    if(again)return again;
+    const r=await SB.upsert('salary_months',
+      {month:ST.sel.m,year:ST.sel.y,gross_amount:0,user_id:uid()},
+      'user_id,month,year');
+    const row=r&&r[0];
+    if(!row||!row.id)throw new Error('Não foi possível criar o mês no banco.');
+    if(!ST.months.find(x=>x.id===row.id))ST.months.unshift(row);
+    return row;
+  })();
+  try{return await _ensuringMonth}
+  finally{_ensuringMonth=null}
 }
 function paintMonthLabel(){
   const el=$('mnav-label');if(!el)return;
@@ -1120,11 +1162,15 @@ function wireAutoSaveSalary(){
   const flush=async(patch)=>{
     if(st){st.textContent='salvando...';st.style.color='var(--t3)'}
     try{
-      const row=await ensureMonth();
+      const row=await ensureMonth();          // lança se não conseguir criar o mês
       const r=await SB.upd('salary_months',row.id,patch);
-      if(r?.[0]){const i=ST.months.findIndex(x=>x.id===row.id);if(i>=0)ST.months[i]=r[0]}
+      if(!r||!r[0])throw new Error('não confirmado pelo servidor');
+      const i=ST.months.findIndex(x=>x.id===row.id);if(i>=0)ST.months[i]=r[0];
       if(st){st.textContent='✓ salvo';st.style.color='var(--green)';setTimeout(()=>{if(st)st.textContent=''},1500)}
-    }catch(err){if(st){st.textContent='erro ao salvar';st.style.color='var(--red)'}}
+    }catch(err){
+      if(st){st.textContent='✗ '+((err&&err.message)||'erro ao salvar');st.style.color='var(--red)'}
+      toast('Salário não salvo: '+((err&&err.message)||'erro'),'err');
+    }
   };
   const debounced=(patch)=>{clearTimeout(t);t=setTimeout(()=>flush(patch),600)};
   gEl.addEventListener('input',()=>{const v=parseFloat(gEl.value)||0;debounced({gross_amount:v})});
@@ -1413,23 +1459,34 @@ async function saveMov(id){
   if(bad)return;
   setBtn('save-mov',true);
   try{
-    // "__sel__" = mês selecionado ainda não gravado → cria preguiçosamente
-    if(sm==='__sel__'||!sm){const row=await ensureMonth();sm=row?row.id:null}
+    // "__sel__" ou vazio = mês selecionado ainda não gravado → cria e CONFIRMA
+    if(sm==='__sel__'||!sm){
+      const row=await ensureMonth();          // lança erro se não conseguir
+      sm=row.id;
+    }
+    // trava de segurança: jamais gravar um movimento sem mês vinculado
+    if(!sm)throw new Error('Movimento sem mês de referência. Recarregue e tente de novo.');
+
     const payload={salary_month_id:sm,description:desc,amount,date:date||null,type,category};
     if(id){
       const r=await SB.upd('movements',id,payload);
-      if(r?.[0]){const i=ST.movs.findIndex(x=>x.id===id);if(i>=0)ST.movs[i]=r[0]}
+      if(!r||!r[0])throw new Error('A alteração não foi confirmada pelo servidor.');
+      const i=ST.movs.findIndex(x=>x.id===id);if(i>=0)ST.movs[i]=r[0];
       /* atualização salva silenciosamente (sem notificação) */
     }else{
       const r=await SB.ins('movements',{...payload,user_id:uid()});
-      if(r?.[0])ST.movs.unshift(r[0]);
-      toast('Movimento adicionado!');
+      // só considera salvo se o servidor devolveu a linha persistida
+      if(!r||!r[0]||!r[0].id)throw new Error('O movimento não foi confirmado pelo servidor.');
+      ST.movs.unshift(r[0]);
     }
     closeModal();
     if(ST.page==='movements')filterMov();
     else if(ST.page==='salary')renderSalary();
     else renderDash();
-  }catch(err){toast(friendly(err),'err')}
+  }catch(err){
+    // mostra o erro REAL para não mascarar falha de gravação
+    toast('Não foi possível salvar: '+((err&&err.message)||'erro'),'err');
+  }
   setBtn('save-mov',false,'Salvar');
 }
 async function delMov(id){
