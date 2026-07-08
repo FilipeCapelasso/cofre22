@@ -541,7 +541,7 @@ function clearSes(){SES=null;LS.d('session')}
 ══════════════════════════════════════════════════════════════ */
 const ST={
   page:'dashboard',
-  months:[],movs:[],invs:[],debts:[],
+  months:[],movs:[],invs:[],debts:[],contribs:[],
   profile:null,
   loaded:false,          // dados já sincronizados nesta sessão?
   syncing:null,          // promessa de sync em andamento (evita corridas)
@@ -598,6 +598,7 @@ const SB={
   upd:(t,id,d)=>SB.call('/rest/v1/'+t+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',prefer:'return=representation',body:d}),
   del:(t,id)=>SB.call('/rest/v1/'+t+'?id=eq.'+encodeURIComponent(id),{method:'DELETE'}),
   upsertProfile:(d)=>SB.call('/rest/v1/profiles',{method:'POST',prefer:'resolution=merge-duplicates,return=representation',body:d}),
+  getContribs:(invId)=>SB.call('/rest/v1/investment_contributions?investment_id=eq.'+encodeURIComponent(invId)+'&order=contribution_date.desc,created_at.desc').then(r=>r||[]),
   async uploadAvatar(userId,file){
     const ext=(file.name.split('.').pop()||'png').toLowerCase();
     const path=userId+'/avatar_'+Date.now()+'.'+ext;
@@ -739,7 +740,7 @@ async function doRecover(e){
 
 function doLogout(){
   clearSes();
-  ST.months=[];ST.movs=[];ST.invs=[];ST.debts=[];ST.profile=null;ST.loaded=false;ST.syncing=null;
+  ST.months=[];ST.movs=[];ST.invs=[];ST.debts=[];ST.contribs=[];ST.profile=null;ST.loaded=false;ST.syncing=null;
   destroyCharts();
   if(refreshTimer){clearTimeout(refreshTimer);refreshTimer=null}
   $('l-email').value='';$('l-pass').value='';
@@ -862,10 +863,11 @@ async function sync(force=false){
   ST.syncing=(async()=>{
     if(!(await ensureSession()))return false;
     try{
-      const [m,mv,iv,db]=await Promise.all([
-        SB.get('salary_months'),SB.get('movements'),SB.get('investments'),SB.get('debts')
+      const [m,mv,iv,db,ct]=await Promise.all([
+        SB.get('salary_months'),SB.get('movements'),SB.get('investments'),SB.get('debts'),
+        SB.get('investment_contributions')
       ]);
-      ST.months=m;ST.movs=mv;ST.invs=iv;ST.debts=db;ST.loaded=true;return true;
+      ST.months=m;ST.movs=mv;ST.invs=iv;ST.debts=db;ST.contribs=ct;ST.loaded=true;return true;
     }catch(err){toast(friendly(err),'err');return false}
     finally{ST.syncing=null}
   })();
@@ -1065,6 +1067,13 @@ async function renderInvPage(){
   if(!ST.invs.length){el.innerHTML='<div class="empty"><div class="empty-ico">📈</div><h3>Nenhum investimento</h3><p>Registre sua carteira para acompanhar a evolução.</p></div>';return}
   el.innerHTML=ST.invs.map(inv=>{
     const g=Number(inv.current_value)-Number(inv.amount_invested),pp=inv.amount_invested>0?(g/inv.amount_invested)*100:0,pos=g>=0;
+    // aportes deste investimento (já ordenados por data desc no sync)
+    const cs=ST.contribs.filter(c=>c.investment_id===inv.id);
+    const nContribs=cs.length;
+    const last=cs[0]||null;
+    const created=inv.purchase_date||(inv.created_at?String(inv.created_at).split('T')[0]:null);
+    const stat=(label,value,color)=>'<div><div style="font-size:10.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">'+label+'</div>'+
+      '<div style="font-size:12.5px;font-weight:600'+(color?';color:'+color:'')+'">'+value+'</div></div>';
     return '<div class="card" style="margin-bottom:12px">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'+
         '<div><div style="font-size:15px;font-weight:700">📈 '+esc(inv.name)+'</div>'+
@@ -1073,12 +1082,27 @@ async function renderInvPage(){
           '<div style="font-family:var(--m);font-size:19px;font-weight:700;color:var(--indigo)">'+fmt(inv.current_value)+'</div>'+
           '<div style="font-size:13px;font-weight:700;color:'+(pos?'var(--green)':'var(--red)')+';margin-top:3px">'+(pos?'▲':'▼')+' '+esc(Math.abs(pp).toFixed(2))+'%</div></div></div>'+
       '<div class="prog"><div class="pf pfi" style="width:'+Math.min(Math.abs(pp),100)+'%"></div></div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);flex-wrap:wrap;gap:6px">'+
-        '<span>Aportado: <strong style="color:var(--t1);font-family:var(--m)">'+fmt(inv.amount_invested)+'</strong></span>'+
-        (inv.quantity?'<span>'+esc(inv.quantity)+' × '+fmt(inv.unit_value)+'</span>':'')+
-        '<span style="color:'+(pos?'var(--green)':'var(--red)')+'">'+(pos?'Lucro':'Prejuízo')+': '+(pos?'+':'')+esc(fmt(g))+'</span></div>'+
-      (inv.return_rate?'<div style="margin-top:8px;font-size:12px;color:var(--t2)">Rentabilidade contratada: <strong style="color:var(--amber)">'+esc(inv.return_rate)+'% a.a.</strong></div>':'')+
+      // grade de informações do cartão
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px 14px;margin-top:4px">'+
+        stat('Total aportado','<span style="font-family:var(--m)">'+fmt(inv.amount_invested)+'</span>','var(--t1)')+
+        stat('Valor atual','<span style="font-family:var(--m)">'+fmt(inv.current_value)+'</span>','var(--indigo)')+
+        stat(pos?'Lucro':'Prejuízo','<span style="font-family:var(--m)">'+(pos?'+':'')+fmt(g)+'</span>',pos?'var(--green)':'var(--red)')+
+        stat('Rentabilidade',(inv.return_rate?esc(inv.return_rate)+'% a.a.':'—'),'var(--amber)')+
+        stat('Aportes realizados',nContribs+(nContribs===1?' aporte':' aportes'),'var(--sky)')+
+        stat('Último aporte',(last?new Date(last.contribution_date+'T00:00:00').toLocaleDateString('pt-BR')+' · '+fmt(last.amount):'—'))+
+        stat('Data de criação',(created?new Date(created+'T00:00:00').toLocaleDateString('pt-BR'):'—'))+
+        (inv.quantity?stat('Quantidade',esc(inv.quantity)+' × '+fmt(inv.unit_value)):'')+
+      '</div>'+
+      // histórico de aportes (expansível)
+      (nContribs?'<details style="margin-top:12px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--t2);user-select:none">Ver histórico de aportes ('+nContribs+')</summary>'+
+        '<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">'+
+        cs.map(c=>'<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 10px;background:var(--bg);border-radius:8px">'+
+          '<span style="color:var(--t2)">'+new Date(c.contribution_date+'T00:00:00').toLocaleDateString('pt-BR')+
+            (c.notes?' <span style="color:var(--t3)">· '+esc(c.notes)+'</span>':'')+'</span>'+
+          '<span style="font-family:var(--m);font-weight:600;color:var(--green)">'+fmt(c.amount)+'</span></div>').join('')+
+        '</div></details>':'')+
       '<div class="card-actions">'+
+        '<button class="btn btn-g btn-sm" data-act="openAddContrib" data-arg="'+esc(inv.id)+'" type="button">➕ Adicionar aporte</button>'+
         '<button class="btn btn-o btn-sm" data-act="openEditInv" data-arg="'+esc(inv.id)+'" type="button">Editar</button>'+
         '<button class="btn btn-r btn-sm" data-act="delInv" data-arg="'+esc(inv.id)+'" type="button">Excluir</button></div></div>';
   }).join('');
@@ -1229,7 +1253,7 @@ async function saveMov(id){
     if(id){
       const r=await SB.upd('movements',id,payload);
       if(r?.[0]){const i=ST.movs.findIndex(x=>x.id===id);if(i>=0)ST.movs[i]=r[0]}
-      toast('Movimento atualizado!');
+      /* atualização salva silenciosamente (sem notificação) */
     }else{
       const r=await SB.ins('movements',{...payload,user_id:uid()});
       if(r?.[0])ST.movs.unshift(r[0]);
@@ -1282,18 +1306,61 @@ async function saveInv(id){
     return_rate:$('ii-r').value?num('ii-r'):null,purchase_date:val('ii-d')||null};
   setBtn('save-inv',true);
   try{
-    if(id){const r=await SB.upd('investments',id,d);if(r?.[0]){const i=ST.invs.findIndex(x=>x.id===id);if(i>=0)ST.invs[i]=r[0]}toast('Investimento atualizado!')}
+    if(id){const r=await SB.upd('investments',id,d);if(r?.[0]){const i=ST.invs.findIndex(x=>x.id===id);if(i>=0)ST.invs[i]=r[0]}/* salvo silenciosamente */}
     else{const r=await SB.ins('investments',{...d,user_id:uid()});if(r?.[0])ST.invs.unshift(r[0]);toast('Investimento adicionado!')}
     closeModal();renderInvPage();
   }catch(err){toast(friendly(err),'err')}
   setBtn('save-inv',false,'Salvar');
 }
 async function delInv(id){
-  const ok=await confirmModal('Excluir investimento','Deseja excluir este investimento?');if(!ok)return;
+  const ok=await confirmModal('Excluir investimento','Deseja excluir este investimento? O histórico de aportes também será removido.');if(!ok)return;
   ldr(true);
-  try{await SB.del('investments',id);ST.invs=ST.invs.filter(i=>i.id!==id);toast('Excluído');renderInvPage()}
-  catch(err){toast(friendly(err),'err')}
+  try{
+    await SB.del('investments',id);
+    ST.invs=ST.invs.filter(i=>i.id!==id);
+    ST.contribs=ST.contribs.filter(c=>c.investment_id!==id);   // aportes caem em cascata no banco
+    toast('Excluído');renderInvPage();
+  }catch(err){toast(friendly(err),'err')}
   ldr(false);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   APORTES — adiciona dinheiro a um investimento existente.
+   NÃO cria novo investimento: registra o aporte no histórico e
+   incrementa amount_invested (mantendo os cálculos atuais).
+══════════════════════════════════════════════════════════════ */
+function openAddContrib(invId){
+  const inv=ST.invs.find(x=>x.id===invId);if(!inv){toast('Investimento não encontrado','err');return}
+  openModal('Adicionar aporte — '+inv.name,
+    '<p style="font-size:12.5px;color:var(--t2);margin-bottom:16px">Total aportado atual: <strong style="font-family:var(--m);color:var(--t1)">'+fmt(inv.amount_invested)+'</strong></p>'+
+    '<div class="fr">'+
+      '<div class="fg"><label class="lbl">Valor do aporte (R$)</label><input class="inp" type="number" id="ct-v" step="0.01" min="0" placeholder="0,00"/></div>'+
+      '<div class="fg"><label class="lbl">Data do aporte</label><input class="inp" type="date" id="ct-d" value="'+new Date().toISOString().split('T')[0]+'"/></div></div>'+
+    '<div class="fg"><label class="lbl">Observação (opcional)</label><input class="inp" type="text" id="ct-n" maxlength="120" placeholder="Ex: aporte mensal"/></div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">'+
+      '<button class="btn btn-o" data-act="closeModal" type="button">Cancelar</button>'+
+      '<button class="btn btn-g" id="save-ct" data-act="saveContrib" data-arg="'+esc(invId)+'" type="button">Adicionar</button></div>');
+}
+async function saveContrib(invId){
+  const inv=ST.invs.find(x=>x.id===invId);if(!inv)return;
+  const amount=num('ct-v'),date=val('ct-d'),notes=val('ct-n');
+  fieldErr('ct-v','');
+  if(amount<=0){fieldErr('ct-v','Informe um valor maior que zero.');return}
+  setBtn('save-ct',true);
+  try{
+    // 1) grava o aporte no histórico
+    const cr=await SB.ins('investment_contributions',{investment_id:invId,amount,contribution_date:date||null,notes:notes||null,user_id:uid()});
+    if(cr?.[0])ST.contribs.unshift(cr[0]);
+    // 2) incrementa o total aportado — mesma coluna já usada nos cálculos
+    const novoAportado=Number(inv.amount_invested)+amount;
+    // valor atual acompanha o novo aporte (patrimônio sobe junto); rentabilidade
+    // e lucro continuam sendo current_value - amount_invested, como antes.
+    const novoAtual=Number(inv.current_value)+amount;
+    const r=await SB.upd('investments',invId,{amount_invested:novoAportado,current_value:novoAtual});
+    if(r?.[0]){const i=ST.invs.findIndex(x=>x.id===invId);if(i>=0)ST.invs[i]=r[0]}
+    closeModal();renderInvPage();
+  }catch(err){toast(friendly(err),'err')}
+  setBtn('save-ct',false,'Adicionar');
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1326,7 +1393,7 @@ async function saveDebt(id){
     installments_total:nTot,installments_paid:nPaid,due_day:$('dd-day').value?intv('dd-day'):null,start_date:val('dd-s')||null};
   setBtn('save-debt',true);
   try{
-    if(id){const r=await SB.upd('debts',id,d);if(r?.[0]){const i=ST.debts.findIndex(x=>x.id===id);if(i>=0)ST.debts[i]=r[0]}toast('Dívida atualizada!')}
+    if(id){const r=await SB.upd('debts',id,d);if(r?.[0]){const i=ST.debts.findIndex(x=>x.id===id);if(i>=0)ST.debts[i]=r[0]}/* salvo silenciosamente */}
     else{const r=await SB.ins('debts',{...d,user_id:uid()});if(r?.[0])ST.debts.unshift(r[0]);toast('Dívida registrada!')}
     closeModal();renderDebtPage();
   }catch(err){toast(friendly(err),'err')}
@@ -1435,7 +1502,7 @@ async function onAvatarPicked(ev){
    As ações são despachadas por data-attributes.
 ══════════════════════════════════════════════════════════════ */
 const ACTIONS={openAddSalary,saveSalary,delSalary,openAddMov,openAddMovFor,openEditMov,dupMov,saveMov,delMov,
-  openAddInv,openEditInv,saveInv,delInv,openAddDebt,openEditDebt,saveDebt,payInst,delDebt,
+  openAddInv,openEditInv,saveInv,delInv,openAddContrib,saveContrib,openAddDebt,openEditDebt,saveDebt,payInst,delDebt,
   openProfile,saveProfile,changePassword,closeModal};
 
 document.addEventListener('click',e=>{
