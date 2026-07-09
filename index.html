@@ -1366,6 +1366,26 @@ function ipcaCfg(){
   if(!cfg.inicio)cfg.inicio=new Date().toISOString().split('T')[0];
   return cfg;
 }
+/* Converte texto digitado (com vírgula OU ponto) em número.
+   Aceita "2.927,89", "2927,89", "2927.89", "2.927" (milhar) e "2,927". */
+function brNum(raw){
+  if(raw==null)return 0;
+  let s=String(raw).trim().replace(/\s/g,'').replace(/R\$/gi,'').replace(/%/g,'');
+  if(!s)return 0;
+  const hasComma=s.includes(','), hasDot=s.includes('.');
+  if(hasComma&&hasDot){
+    // formato brasileiro: ponto = milhar, vírgula = decimal
+    s=s.replace(/\./g,'').replace(',', '.');
+  }else if(hasComma){
+    s=s.replace(',', '.');                     // só vírgula → decimal
+  }else if(hasDot){
+    // só ponto: se for padrão de milhar (ex.: 2.927 ou 1.234.567), remove os pontos;
+    // senão (ex.: 12.5), mantém como decimal internacional.
+    if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
+  }
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
 function ipcaSave(patch){
   const cur=ipcaCfg();
   LS.s('ipcaPlan_'+(uid()||'x'),Object.assign({},cur,patch));
@@ -1418,7 +1438,7 @@ async function renderInvPage(){
   const field=(id,label,val,suffix,icon)=>
     '<div class="ip-field"><label class="lbl" for="'+id+'">'+(icon?icon+' ':'')+label+'</label>'+
     '<div class="ip-inputwrap">'+
-    '<input class="inp ipca-fld" id="'+id+'" type="number" step="0.01" inputmode="decimal" value="'+esc(val)+'"'+
+    '<input class="inp ipca-fld" id="'+id+'" type="text" inputmode="decimal" autocomplete="off" value="'+esc(val)+'"'+
     (suffix?' style="padding-right:44px"':'')+'/>'+
     (suffix?'<span class="ip-suffix">'+suffix+'</span>':'')+
     '</div></div>';
@@ -1552,7 +1572,7 @@ function wireIpcaFields(){
     const handler=()=>{
       const key=map[id];
       const raw=eln.value;
-      const value=(id==='ip-inicio'||id==='ip-venc')?raw:(parseFloat(raw)||0);
+      const value=(id==='ip-inicio'||id==='ip-venc')?raw:brNum(raw);
       ipcaSave({[key]:value});
       clearTimeout(t);t=setTimeout(updateIpcaResults,300);   // atualiza SÓ resultados
     };
