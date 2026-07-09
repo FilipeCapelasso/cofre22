@@ -392,6 +392,212 @@ input.inp[type=number]{font-family:var(--m)}
   background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
   border:1px solid var(--b);transition:transform .18s var(--ease),border-color .18s}
 .ap-row:hover{transform:translateX(3px);border-color:var(--bh)}
+
+/* ╔═══════════════════════════════════════════════════════════════╗
+   ║   CAMADA VISUAL PREMIUM — só estilo, nada de HTML/JS muda      ║
+   ║   aurora · brilho · reflexos · glow · micro-interações         ║
+   ╚═══════════════════════════════════════════════════════════════╝ */
+:root{
+  --grad-g:linear-gradient(135deg,#22c55e,#4ade80 55%,#86efac);
+  --grad-hero:linear-gradient(135deg,#22c55e 0%,#38bdf8 45%,#818cf8 100%);
+  --stroke:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.02));
+  --shadow-soft:0 6px 26px -12px rgba(0,0,0,.55);
+  --shadow-lift:0 20px 52px -18px rgba(0,0,0,.75);
+}
+
+/* ——— Aurora animada por trás de tudo ——— */
+body::after{content:'';position:fixed;inset:-25%;z-index:0;pointer-events:none;opacity:.5;
+  background:
+    radial-gradient(closest-side at 18% 22%,rgba(34,197,94,.16),transparent 62%),
+    radial-gradient(closest-side at 84% 16%,rgba(129,140,248,.18),transparent 62%),
+    radial-gradient(closest-side at 62% 88%,rgba(56,189,248,.12),transparent 62%);
+  filter:blur(34px);animation:aurora 26s ease-in-out infinite alternate}
+@keyframes aurora{
+  0%{transform:translate3d(0,0,0) rotate(0deg) scale(1)}
+  50%{transform:translate3d(2%,-2%,0) rotate(4deg) scale(1.06)}
+  100%{transform:translate3d(-2%,2%,0) rotate(-3deg) scale(1.03)}}
+.orb{mix-blend-mode:screen;opacity:.7}
+.orbs::after{content:'';position:absolute;width:340px;height:340px;border-radius:50%;
+  filter:blur(90px);opacity:.45;background:rgba(56,189,248,.10);top:14%;right:24%;
+  animation:floatOrb 22s ease-in-out infinite;animation-delay:-5s}
+
+/* ——— Scrollbar e seleção ——— */
+*{scrollbar-width:thin;scrollbar-color:rgba(148,163,184,.32) transparent}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--green),var(--indigo));
+  border-radius:20px;border:2px solid transparent;background-clip:content-box}
+::selection{background:rgba(34,197,94,.32);color:#fff}
+
+/* ——— Logos com degradê deslizante ——— */
+.sb-logo,.al-logo,.ar-logo{background:var(--grad-hero)!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;background-size:220% auto;
+  animation:hueSlide 7s linear infinite}
+@keyframes hueSlide{to{background-position:220% center}}
+
+/* ——— Entrada escalonada dos elementos da página ——— */
+.page.on>*{animation:riseIn .5s var(--ease) both}
+.page.on>*:nth-child(1){animation-delay:.02s}
+.page.on>*:nth-child(2){animation-delay:.07s}
+.page.on>*:nth-child(3){animation-delay:.12s}
+.page.on>*:nth-child(4){animation-delay:.17s}
+.page.on>*:nth-child(5){animation-delay:.22s}
+.page.on>*:nth-child(6){animation-delay:.27s}
+.page.on>*:nth-child(7){animation-delay:.32s}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+.g4>.card,.g3>.card{animation:popCard .5s var(--ease) both}
+.g4>.card:nth-child(2),.g3>.card:nth-child(2){animation-delay:.06s}
+.g4>.card:nth-child(3),.g3>.card:nth-child(3){animation-delay:.12s}
+.g4>.card:nth-child(4){animation-delay:.18s}
+@keyframes popCard{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* ——— CARDS: borda em degradê, reflexo deslizante, elevação ——— */
+.card{backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);
+  box-shadow:var(--shadow-soft);
+  transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease),background .28s var(--ease)}
+.card::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:var(--stroke);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.9}
+.card::after{content:'';position:absolute;top:0;left:-70%;width:50%;height:100%;
+  background:linear-gradient(115deg,transparent,rgba(255,255,255,.10),transparent);
+  transform:skewX(-18deg);transition:left .75s var(--ease);pointer-events:none;z-index:1}
+.card:hover{transform:translateY(-4px) scale(1.006);box-shadow:var(--shadow-lift);border-color:var(--bh)}
+.card:hover::after{left:130%}
+.card-val{background:linear-gradient(180deg,#fff,#cbd5e1);-webkit-background-clip:text;
+  background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
+.card:hover .card-bar{box-shadow:0 0 14px 1px currentColor}
+.bar-g{box-shadow:0 0 12px rgba(34,197,94,.6)}.bar-i{box-shadow:0 0 12px rgba(129,140,248,.6)}
+.bar-r{box-shadow:0 0 12px rgba(239,68,68,.5)}.bar-a{box-shadow:0 0 12px rgba(245,158,11,.5)}
+
+/* ——— BOTÕES com brilho deslizante ——— */
+.btn{position:relative;overflow:hidden;isolation:isolate}
+.btn::before{content:'';position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.28),transparent 70%);
+  transform:translateX(-120%);transition:transform .6s var(--ease)}
+.btn:hover:not(:disabled)::before{transform:translateX(120%)}
+.btn-g{background:var(--grad-g);color:#04130a;box-shadow:0 4px 18px -6px rgba(34,197,94,.6)}
+.btn-g:hover:not(:disabled){box-shadow:0 8px 30px -6px rgba(34,197,94,.78);transform:translateY(-2px)}
+.btn:active:not(:disabled){transform:scale(.96)}
+
+/* ——— SIDEBAR: glass + item ativo com barra luminosa ——— */
+.sb{background:linear-gradient(180deg,rgba(17,24,39,.92),rgba(13,20,32,.94));
+  backdrop-filter:blur(16px);box-shadow:2px 0 30px -10px rgba(0,0,0,.6)}
+.sb-item{position:relative;transition:all .2s var(--ease)}
+.sb-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%) scaleY(0);
+  width:3px;height:62%;border-radius:3px;background:var(--grad-g);
+  box-shadow:0 0 12px rgba(34,197,94,.7);transition:transform .25s var(--ease)}
+.sb-item.on::before{transform:translateY(-50%) scaleY(1)}
+.sb-item.on{background:linear-gradient(90deg,rgba(34,197,94,.16),rgba(34,197,94,.02))}
+.sb-item:hover{transform:translateX(3px)}
+.sb-item svg{transition:transform .25s var(--ease)}
+.sb-item:hover svg{transform:scale(1.15) rotate(-3deg)}
+.sb-av{box-shadow:0 0 0 2px rgba(255,255,255,.08),0 4px 14px -4px rgba(34,197,94,.5);transition:transform .25s var(--ease)}
+.sb-av:hover{transform:scale(1.08) rotate(3deg)}
+
+/* ——— HEADER e navegador de mês ——— */
+.mhdr{box-shadow:0 4px 20px -12px rgba(0,0,0,.8)}
+#ph-t{background:linear-gradient(90deg,#fff,#e2e8f0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.mnav{backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.mnav-btn{transition:all .2s var(--ease)}
+.mnav-btn:hover{background:var(--gd);color:var(--green);box-shadow:0 0 14px -2px rgba(34,197,94,.5);transform:scale(1.1)}
+.mnav-label.current{text-shadow:0 0 16px rgba(34,197,94,.55)}
+
+/* ——— MOVIMENTOS: barra lateral por tipo + hover ——— */
+.mvi{position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+  transition:transform .22s var(--ease),border-color .22s var(--ease),box-shadow .22s var(--ease)}
+.mvi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;opacity:.85;background:var(--t3);transition:width .22s var(--ease)}
+.mvi:hover{transform:translateX(4px);box-shadow:var(--shadow-soft)}
+.mvi:hover::before{width:5px}
+.mvi:has(.mvi-v.entrada)::before{background:var(--green);box-shadow:0 0 12px rgba(34,197,94,.5)}
+.mvi:has(.mvi-v.saida)::before{background:var(--red);box-shadow:0 0 12px rgba(239,68,68,.5)}
+.mvi:has(.mvi-v.investimento)::before{background:var(--indigo);box-shadow:0 0 12px rgba(129,140,248,.5)}
+.mvi:has(.mvi-v.reserva)::before{background:var(--amber);box-shadow:0 0 12px rgba(245,158,11,.5)}
+.mvi-em{background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);transition:transform .22s var(--ease)}
+.mvi:hover .mvi-em{transform:scale(1.12) rotate(-4deg)}
+
+/* ——— BADGES ——— */
+.badge{box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);backdrop-filter:blur(4px)}
+
+/* ——— PROGRESSO com facho de luz ——— */
+.prog{box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.pf{position:relative;overflow:hidden;box-shadow:0 0 14px -2px currentColor}
+.pf::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);
+  transform:translateX(-100%);animation:progShine 2.4s var(--ease) infinite}
+@keyframes progShine{to{transform:translateX(100%)}}
+.pfg{color:#22c55e}.pfi{color:#818cf8}.pfa{color:#f59e0b}.pfr{color:#ef4444}
+
+/* ——— INPUTS com glow ——— */
+input.inp,select.inp,textarea.inp{transition:border-color .2s,box-shadow .2s,transform .12s}
+input.inp:focus,select.inp:focus,textarea.inp:focus{
+  box-shadow:0 0 0 3px var(--gd),0 0 20px -4px rgba(34,197,94,.42);transform:translateY(-1px)}
+.inp-wrap:focus-within .ico{color:var(--green);transform:scale(1.1)}
+.inp-wrap .ico{transition:all .2s var(--ease)}
+
+/* ——— AUTH: painel esquerdo cinematográfico ——— */
+.auth-left::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:42px 42px;
+  -webkit-mask:radial-gradient(ellipse at 30% 60%,#000,transparent 75%);
+  mask:radial-gradient(ellipse at 30% 60%,#000,transparent 75%)}
+.al-feat{transition:transform .25s var(--ease),color .25s}
+.al-feat:hover{transform:translateX(6px);color:var(--t1)}
+.al-feat span{transition:all .25s var(--ease)}
+.al-feat:hover span{box-shadow:0 0 18px -2px rgba(34,197,94,.6);transform:scale(1.08) rotate(-4deg)}
+.al-heading span{background:var(--grad-g)!important;-webkit-background-clip:text!important;
+  background-clip:text!important;-webkit-text-fill-color:transparent!important;
+  background-size:200% auto;animation:hueSlide 6s linear infinite}
+.atab.active{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04))}
+
+/* ——— MODAL e TOASTS ——— */
+#mbg{backdrop-filter:blur(14px) saturate(120%)}
+#mbox{background:linear-gradient(180deg,rgba(23,32,48,.96),rgba(15,22,36,.97));
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.06)}
+@keyframes mIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mcls{transition:all .2s var(--ease)}
+.mcls:hover{transform:rotate(90deg) scale(1.1);color:var(--red)}
+.toast{backdrop-filter:blur(12px);box-shadow:0 14px 40px -12px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.05)}
+.toast.ok{box-shadow:0 14px 40px -12px rgba(34,197,94,.4),0 0 0 1px rgba(34,197,94,.2)}
+.toast.err{box-shadow:0 14px 40px -12px rgba(239,68,68,.4),0 0 0 1px rgba(239,68,68,.2)}
+
+/* ——— LOADER anel duplo ——— */
+.ldr-ring{border-top-color:var(--green);box-shadow:0 0 24px -4px rgba(34,197,94,.6)}
+.ldr-ring::after{content:'';position:absolute;inset:-3px;border-radius:50%;
+  border:3px solid transparent;border-bottom-color:var(--indigo);animation:spin 1.1s linear infinite reverse}
+
+/* ——— empty states com ícone flutuante ——— */
+.empty-ico{display:inline-block;animation:floaty 3.2s ease-in-out infinite;filter:drop-shadow(0 6px 12px rgba(0,0,0,.4))}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* ——— títulos de seção com marca luminosa ——— */
+.sec h2{position:relative}
+.sec h2::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);
+  width:4px;height:0;border-radius:3px;background:var(--grad-g);
+  box-shadow:0 0 10px rgba(34,197,94,.6);transition:height .3s var(--ease)}
+.page.on .sec h2::before{height:16px}
+
+/* ——— cartões de estatística de investimento: brilho no hover ——— */
+.ip-stat::after{content:'';position:absolute;top:0;left:-70%;width:50%;height:100%;
+  background:linear-gradient(115deg,transparent,rgba(255,255,255,.08),transparent);
+  transform:skewX(-18deg);transition:left .7s var(--ease);pointer-events:none}
+.ip-stat:hover::after{left:130%}
+.ip-countdown{animation:pulseGlow 3s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 20px -4px rgba(34,197,94,.5)}50%{box-shadow:0 0 28px -2px rgba(34,197,94,.75)}}
+
+/* ——— <details> ——— */
+details>summary{transition:color .2s}
+details>summary:hover{color:var(--green)!important}
+details[open]>summary{color:var(--green)!important}
+
+/* ——— respeita quem prefere menos movimento ——— */
+@media(prefers-reduced-motion:reduce){
+  body::after,.orbs::after,.orb,.pf::after,.card::after,.ip-stat::after,.btn::before,
+  .empty-ico,.sb-logo,.al-logo,.ar-logo,.al-heading span,.ip-countdown{animation:none!important}
+  .page.on>*,.g4>.card,.g3>.card{animation:none!important;opacity:1!important;transform:none!important}
+}
 </style>
 </head>
 <body>
