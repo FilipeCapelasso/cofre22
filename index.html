@@ -315,6 +315,79 @@ input.inp[type=number]{font-family:var(--m)}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
+
+/* ══════════════ PAINEL DE INVESTIMENTOS (IPCA+) ══════════════ */
+/* Hero */
+.ip-hero{position:relative;overflow:hidden;border-radius:var(--rl);padding:22px 24px;margin-bottom:18px;
+  background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(56,189,248,.10) 55%,rgba(129,140,248,.14));
+  border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 40px -16px rgba(0,0,0,.7)}
+.ip-hero-glow{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 120% at 15% 0%,rgba(34,197,94,.22),transparent 60%),
+             radial-gradient(ellipse 50% 120% at 90% 100%,rgba(129,140,248,.20),transparent 60%);
+  animation:ipGlow 8s ease-in-out infinite alternate}
+@keyframes ipGlow{0%{opacity:.6;transform:translateX(0)}100%{opacity:1;transform:translateX(6px)}}
+.ip-hero-title{font-size:19px;font-weight:800;letter-spacing:-.3px;
+  background:linear-gradient(135deg,#fff,#cbd5e1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ip-hero-sub{font-size:12.5px;color:var(--t2);margin-top:4px}
+.ip-countdown{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:20px;
+  font-size:12px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,rgba(34,197,94,.35),rgba(56,189,248,.35));
+  border:1px solid rgba(255,255,255,.14);box-shadow:0 0 20px -4px rgba(34,197,94,.5)}
+
+/* Plano / inputs */
+.ip-plan{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));
+  box-shadow:0 6px 26px -12px rgba(0,0,0,.5)}
+.ip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:14px}
+.ip-field{display:flex;flex-direction:column;gap:0}
+.ip-field .lbl{margin-bottom:7px}
+.ip-inputwrap{position:relative}
+.ip-suffix{position:absolute;right:13px;top:50%;transform:translateY(-50%);
+  font-size:11px;font-weight:700;color:var(--t3);pointer-events:none;transition:color .2s}
+.ipca-fld{transition:border-color .2s,box-shadow .2s,background .2s,transform .12s!important}
+.ipca-fld:focus{border-color:var(--green)!important;
+  box-shadow:0 0 0 3px var(--gd),0 0 22px -4px rgba(34,197,94,.45)!important}
+.ip-field:focus-within .ip-suffix{color:var(--green)}
+.ip-field:focus-within .lbl{color:var(--green)}
+.ip-ratehint{font-size:11.5px;color:var(--t3);margin-top:14px;line-height:1.7;
+  padding:11px 13px;border-radius:10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12)}
+
+/* Cards de estatística coloridos */
+.ip-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px}
+.ip-stat{position:relative;overflow:hidden;padding:16px 16px 15px;border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  border:1px solid var(--b);transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s}
+.ip-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--t3);opacity:.8}
+.ip-stat:hover{transform:translateY(-3px);box-shadow:0 14px 34px -14px rgba(0,0,0,.6)}
+.ip-stat-lbl{font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.ip-stat-val{font-family:var(--m);font-size:18px;font-weight:700;line-height:1.1}
+.ip-stat-sub{font-size:11px;color:var(--t3);margin-top:5px}
+.ip-stat.s-green::before{background:var(--green);box-shadow:0 0 14px var(--green)}
+.ip-stat.s-green .ip-stat-val{color:var(--green)}
+.ip-stat.s-indigo::before{background:var(--indigo);box-shadow:0 0 14px var(--indigo)}
+.ip-stat.s-indigo .ip-stat-val{color:var(--indigo)}
+.ip-stat.s-amber::before{background:var(--amber);box-shadow:0 0 14px var(--amber)}
+.ip-stat.s-amber .ip-stat-val{color:var(--amber)}
+.ip-stat.s-red::before{background:var(--red);box-shadow:0 0 14px var(--red)}
+.ip-stat.s-red .ip-stat-val{color:var(--red)}
+.ip-stat.s-neutral .ip-stat-val{color:var(--t1)}
+.ip-stat.s-neutral::before{background:linear-gradient(var(--green),var(--indigo))}
+
+/* Valor de hoje em destaque */
+.ip-today{background:linear-gradient(135deg,rgba(129,140,248,.08),rgba(34,197,94,.05));
+  border:1px solid rgba(129,140,248,.16)}
+.ip-today-val{font-family:var(--m);font-size:22px;font-weight:800;margin-top:2px;
+  background:linear-gradient(135deg,#818cf8,#a5b4fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* Tabelas */
+.ip-tablecard table th{position:sticky;top:0}
+.ip-tablecard tbody tr{transition:background .15s}
+.ip-tablecard tbody tr:hover{background:rgba(255,255,255,.03)}
+
+@media(max-width:600px){
+  .ip-grid{grid-template-columns:1fr 1fr}
+  .ip-hero{padding:18px}
+  .ip-hero-title{font-size:16px}
+}
 </style>
 </head>
 <body>
@@ -1338,109 +1411,125 @@ async function renderInvPage(){
   if(!(await sync()))return;
   const cfg=ipcaCfg();
   const el=$('inv-list');
+  const venc=parseDate(cfg.vencimento),now=new Date();
+  const diasAteVenc=venc?Math.max(Math.ceil((venc-now)/DAY_MS),0):0;
+  const anosAteVenc=(diasAteVenc/365);
+
+  const field=(id,label,val,suffix,icon)=>
+    '<div class="ip-field"><label class="lbl" for="'+id+'">'+(icon?icon+' ':'')+label+'</label>'+
+    '<div class="ip-inputwrap">'+
+    '<input class="inp ipca-fld" id="'+id+'" type="number" step="0.01" inputmode="decimal" value="'+esc(val)+'"'+
+    (suffix?' style="padding-right:44px"':'')+'/>'+
+    (suffix?'<span class="ip-suffix">'+suffix+'</span>':'')+
+    '</div></div>';
+  const dfield=(id,label,val,icon)=>
+    '<div class="ip-field"><label class="lbl" for="'+id+'">'+(icon?icon+' ':'')+label+'</label>'+
+    '<input class="inp ipca-fld" id="'+id+'" type="date" value="'+esc(val)+'"/></div>';
+
+  // ── ESTRUTURA MONTADA UMA ÚNICA VEZ ──
+  // Os inputs ficam em #ipca-inputs (nunca recriados na digitação).
+  // Só #ipca-results é atualizado a cada tecla → o foco nunca se perde.
+  el.innerHTML=
+    // cabeçalho
+    '<div class="ip-hero">'+
+      '<div class="ip-hero-glow"></div>'+
+      '<div style="position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'+
+        '<div><div class="ip-hero-title">🏛️ '+esc(cfg.nome)+'</div>'+
+          '<div class="ip-hero-sub" id="ip-hero-sub">IPCA + '+esc(cfg.real.toFixed(2))+'% a.a. · vence em '+(venc?venc.toLocaleDateString('pt-BR'):'—')+'</div></div>'+
+        '<div style="text-align:right"><span class="ip-countdown" id="ip-countdown">faltam '+diasAteVenc+' dias</span>'+
+          '<div style="font-size:11px;color:var(--t3);margin-top:6px" id="ip-years">≈ '+anosAteVenc.toFixed(1)+' anos até o vencimento</div></div>'+
+      '</div>'+
+    '</div>'+
+
+    // parâmetros editáveis — montados UMA vez
+    '<div class="sec"><h2>Meu plano</h2><span class="badge bs">💾 salva automaticamente</span></div>'+
+    '<div class="card ip-plan" style="margin-bottom:16px">'+
+      '<div id="ipca-inputs" class="ip-grid">'+
+        field('ip-inicial','Valor inicial',cfg.inicial,'R$','💰')+
+        field('ip-mensal','Aporte mensal',cfg.mensal,'R$','📅')+
+        field('ip-real','Taxa real (IPCA+)',cfg.real,'%','📈')+
+        field('ip-ipca','IPCA estimado',cfg.ipca,'%','🔥')+
+        field('ip-b3','Taxa B3',cfg.b3,'%','🏦')+
+        field('ip-preco','Preço unitário',cfg.preco,'R$','🎫')+
+        dfield('ip-inicio','Data de início',cfg.inicio,'▶️')+
+        dfield('ip-venc','Vencimento',cfg.vencimento,'🏁')+
+      '</div>'+
+      '<div class="ip-ratehint" id="ip-ratehint"></div>'+
+    '</div>'+
+
+    // zona de resultados — ÚNICA parte recalculada a cada tecla
+    '<div id="ipca-results"></div>';
+
+  wireIpcaFields();      // liga listeners UMA vez (nos inputs que não serão recriados)
+  updateIpcaResults();   // preenche resultados + gráfico
+}
+
+/* Atualiza SOMENTE a zona de resultados (não toca nos inputs → foco preservado) */
+function updateIpcaResults(){
+  const cfg=ipcaCfg();
+  const box=$('ipca-results');if(!box)return;
   const start=parseDate(cfg.inicio),venc=parseDate(cfg.vencimento),now=new Date();
   const annualNet=ipcaAnnualNet(cfg);
   const nominal=(1+cfg.real/100)*(1+cfg.ipca/100)-1;
   const contribs=ipcaContribs(cfg);
   const nAportes=contribs.length;
   const totalAportado=contribs.reduce((a,c)=>a+c.amount,0);
-  const fin=ipcaProjectAt(cfg,venc);                 // no vencimento
-  const hoje=ipcaProjectAt(cfg,now);                 // valor estimado hoje
+  const fin=ipcaProjectAt(cfg,venc);
+  const hoje=ipcaProjectAt(cfg,now);
   const diasAteVenc=venc?Math.max(Math.ceil((venc-now)/DAY_MS),0):0;
-  const anosAteVenc=(diasAteVenc/365);
   const qtdTitulos=cfg.preco>0?(cfg.inicial/cfg.preco):0;
   const rentLiquidaPct=totalAportado>0?(fin.netGain/totalAportado)*100:0;
-
   const money=v=>'<span style="font-family:var(--m)">'+fmt(v)+'</span>';
-  const field=(id,label,val,step,suffix)=>
-    '<div class="fg" style="margin-bottom:0"><label class="lbl">'+label+'</label>'+
-    '<div style="position:relative">'+
-    '<input class="inp ipca-fld" id="'+id+'" type="number" step="'+(step||'0.01')+'" value="'+esc(val)+'"'+
-    (suffix?' style="padding-right:42px"':'')+'/>'+
-    (suffix?'<span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--t3);pointer-events:none">'+suffix+'</span>':'')+
-    '</div></div>';
-  const dfield=(id,label,val)=>
-    '<div class="fg" style="margin-bottom:0"><label class="lbl">'+label+'</label>'+
-    '<input class="inp ipca-fld" id="'+id+'" type="date" value="'+esc(val)+'"/></div>';
-  const box=(label,value,color,sub)=>
-    '<div class="card" style="padding:16px">'+
-      '<div class="card-lbl">'+label+'</div>'+
-      '<div class="card-val" style="font-size:18px'+(color?';-webkit-text-fill-color:'+color+';background:none':'')+'">'+value+'</div>'+
-      (sub?'<div class="card-sub">'+sub+'</div>':'')+'</div>';
 
-  el.innerHTML=
-    // cabeçalho
-    '<div class="card" style="margin-bottom:14px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">'+
-        '<div><div style="font-size:17px;font-weight:800">🏛️ '+esc(cfg.nome)+'</div>'+
-          '<div style="font-size:12.5px;color:var(--t2);margin-top:3px">IPCA + '+esc(cfg.real.toFixed(2))+'% a.a. · vence em '+(venc?venc.toLocaleDateString('pt-BR'):'—')+'</div></div>'+
-        '<div style="text-align:right"><span class="badge bi">faltam '+diasAteVenc+' dias</span>'+
-          '<div style="font-size:11px;color:var(--t3);margin-top:4px">≈ '+anosAteVenc.toFixed(1)+' anos até o vencimento</div></div>'+
-      '</div>'+
+  // atualiza cabeçalho e dica de taxa (sem recriar inputs)
+  const subEl=$('ip-hero-sub');if(subEl)subEl.textContent='IPCA + '+cfg.real.toFixed(2)+'% a.a. · vence em '+(venc?venc.toLocaleDateString('pt-BR'):'—');
+  const cdEl=$('ip-countdown');if(cdEl)cdEl.textContent='faltam '+diasAteVenc+' dias';
+  const yrEl=$('ip-years');if(yrEl)yrEl.textContent='≈ '+(diasAteVenc/365).toFixed(1)+' anos até o vencimento';
+  const hint=$('ip-ratehint');
+  if(hint)hint.innerHTML='💡 Taxa nominal estimada: <strong style="color:var(--amber)">'+(nominal*100).toFixed(2)+'% a.a.</strong> '+
+    '(IPCA '+cfg.ipca.toFixed(2)+'% + real '+cfg.real.toFixed(2)+'%). Descontando a B3: <strong style="color:var(--indigo)">'+(annualNet*100).toFixed(2)+'% a.a.</strong> líquida. '+
+    'Como o IPCA futuro é incerto, ajuste "IPCA estimado" para simular cenários.';
+
+  const bigbox=(label,value,cls,sub)=>
+    '<div class="ip-stat '+(cls||'')+'">'+
+      '<div class="ip-stat-lbl">'+label+'</div>'+
+      '<div class="ip-stat-val">'+value+'</div>'+
+      (sub?'<div class="ip-stat-sub">'+sub+'</div>':'')+'</div>';
+
+  box.innerHTML=
+    '<div class="sec"><h2>Projeção no vencimento'+(venc?' ('+venc.toLocaleDateString('pt-BR')+')':'')+'</h2></div>'+
+    '<div class="ip-stats" style="margin-bottom:16px">'+
+      bigbox('Total aportado',money(totalAportado),'s-neutral',nAportes+' aportes')+
+      bigbox('Valor bruto',money(fin.gross),'s-indigo','antes de impostos')+
+      bigbox('IR previsto',money(fin.ir),'s-amber','tabela regressiva')+
+      bigbox('Valor líquido',money(fin.net),'s-green','já com IR')+
+      bigbox('Rendimento líquido',money(fin.netGain),fin.netGain>=0?'s-green':'s-red','lucro após IR')+
+      bigbox('Rentabilidade',rentLiquidaPct.toFixed(1)+'%','s-green','sobre o aportado')+
     '</div>'+
 
-    // ── PARÂMETROS EDITÁVEIS (salvam automaticamente) ──
-    '<div class="sec"><h2>Meu plano</h2><span class="badge bs">salva automaticamente</span></div>'+
-    '<div class="card" style="margin-bottom:14px">'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">'+
-        field('ip-inicial','Valor inicial',cfg.inicial,'0.01','R$')+
-        field('ip-mensal','Aporte mensal',cfg.mensal,'0.01','R$')+
-        field('ip-real','Taxa real (IPCA+)',cfg.real,'0.01','%')+
-        field('ip-ipca','IPCA estimado',cfg.ipca,'0.01','%')+
-        field('ip-b3','Taxa B3',cfg.b3,'0.01','%')+
-        field('ip-preco','Preço unitário',cfg.preco,'0.01','R$')+
-        dfield('ip-inicio','Data de início',cfg.inicio)+
-        dfield('ip-venc','Vencimento',cfg.vencimento)+
-      '</div>'+
-      '<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.6">'+
-        '💡 A taxa nominal estimada é <strong style="color:var(--amber)">'+(nominal*100).toFixed(2)+'% a.a.</strong> '+
-        '(IPCA '+cfg.ipca.toFixed(2)+'% + real '+cfg.real.toFixed(2)+'%), já descontando a B3 fica <strong style="color:var(--indigo)">'+(annualNet*100).toFixed(2)+'% a.a.</strong> líquida. '+
-        'Como o IPCA futuro é incerto, ajuste o campo "IPCA estimado" para simular cenários.</div>'+
-    '</div>'+
-
-    // ── RESULTADO NO VENCIMENTO ──
-    '<div class="sec"><h2>Projeção no vencimento ('+(venc?venc.toLocaleDateString('pt-BR'):'—')+')</h2></div>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px">'+
-      box('Total que será aportado',money(totalAportado),null,nAportes+' aportes ('+cfg.inicial.toLocaleString('pt-BR')+' + '+(nAportes-1)+'×'+cfg.mensal.toLocaleString('pt-BR')+')')+
-      box('Valor bruto',money(fin.gross),'#818cf8','antes de impostos')+
-      box('IR previsto',money(fin.ir),'#f59e0b','tabela regressiva')+
-      box('Valor líquido',money(fin.net),'#22c55e','já com IR')+
-      box('Rendimento líquido',money(fin.netGain),fin.netGain>=0?'#22c55e':'#ef4444','lucro após IR')+
-      box('Rentabilidade líquida',rentLiquidaPct.toFixed(1)+'%','#22c55e','sobre o aportado')+
-    '</div>'+
-
-    // ── VALOR ESTIMADO HOJE ──
-    '<div class="card" style="margin-bottom:14px">'+
-      '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">'+
+    '<div class="card ip-today" style="margin-bottom:16px">'+
+      '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px">'+
         '<div><div class="card-lbl">Valor estimado hoje</div>'+
-          '<div style="font-family:var(--m);font-size:20px;font-weight:700;color:var(--indigo)">'+fmt(hoje.gross)+'</div>'+
-          '<div class="card-sub">aportado até hoje: '+fmt(hoje.invested)+' · juros: '+fmt(hoje.gain)+'</div></div>'+
+          '<div class="ip-today-val">'+fmt(hoje.gross)+'</div>'+
+          '<div class="card-sub">aportado: '+fmt(hoje.invested)+' · juros: '+fmt(hoje.gain)+'</div></div>'+
         '<div style="text-align:right"><div class="card-lbl">Títulos no aporte inicial</div>'+
-          '<div style="font-family:var(--m);font-size:20px;font-weight:700">'+qtdTitulos.toFixed(4)+'</div>'+
+          '<div class="ip-today-val" style="-webkit-text-fill-color:var(--t1)">'+qtdTitulos.toFixed(4)+'</div>'+
           '<div class="card-sub">a '+fmt(cfg.preco)+' cada</div></div>'+
       '</div>'+
     '</div>'+
 
-    // ── GRÁFICO ──
-    '<div class="card" style="margin-bottom:14px">'+
-      '<div class="sec" style="margin-top:0;margin-bottom:12px"><h2>Evolução projetada</h2><span class="badge bg">Aportado × Líquido</span></div>'+
-      '<div class="chw" style="height:240px"><canvas id="ch-ipca"></canvas></div>'+
+    '<div class="card" style="margin-bottom:16px">'+
+      '<div class="sec" style="margin-top:0;margin-bottom:14px"><h2>Evolução projetada</h2><span class="badge bg">Aportado × Líquido</span></div>'+
+      '<div class="chw" style="height:250px"><canvas id="ch-ipca"></canvas></div>'+
     '</div>'+
 
-    // ── TABELA ANO A ANO ──
     '<div class="sec"><h2>Previsão ano a ano</h2></div>'+
-    '<div class="card" style="margin-bottom:14px;overflow-x:auto">'+
-      ipcaYearTable(cfg,start,venc)+
-    '</div>'+
+    '<div class="card ip-tablecard" style="margin-bottom:16px;overflow-x:auto">'+ipcaYearTable(cfg,start,venc)+'</div>'+
 
-    // ── SIMULAÇÕES DE APORTE ──
     '<div class="sec"><h2>E se eu aumentar o aporte mensal?</h2></div>'+
-    '<div class="card" style="margin-bottom:14px;overflow-x:auto">'+
-      ipcaSimTable(cfg,venc)+
-    '</div>'+
+    '<div class="card ip-tablecard" style="margin-bottom:16px;overflow-x:auto">'+ipcaSimTable(cfg,venc)+'</div>'+
 
-    // ── CARACTERÍSTICAS DO TÍTULO ──
-    '<details class="card" style="margin-bottom:14px"><summary style="cursor:pointer;font-size:13px;font-weight:700">Características do título</summary>'+
+    '<details class="card" style="margin-bottom:16px"><summary style="cursor:pointer;font-size:13px;font-weight:700">📋 Características do título</summary>'+
       '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;font-size:12.5px;color:var(--t2)">'+
         '<div>Pagamento de juros: <strong style="color:var(--t1)">no vencimento</strong></div>'+
         '<div>IR sobre o rendimento: <strong style="color:var(--t1)">22,5% → 15%</strong></div>'+
@@ -1450,11 +1539,27 @@ async function renderInvPage(){
         '<div>Valor mínimo: <strong style="color:var(--t1)">'+fmt(cfg.preco*0.01)+'</strong></div>'+
       '</div></details>';
 
-  wireIpcaFields();
   drawIpcaChart(cfg,start,venc);
 }
 
-/* tabela de previsão ano a ano até o vencimento */
+/* liga o salvamento automático UMA vez; a digitação NÃO recria os inputs.
+   Só a zona de resultados é recalculada (debounce curto) → foco preservado. */
+function wireIpcaFields(){
+  const map={'ip-inicial':'inicial','ip-mensal':'mensal','ip-real':'real','ip-ipca':'ipca','ip-b3':'b3','ip-preco':'preco','ip-inicio':'inicio','ip-venc':'vencimento'};
+  let t=null;
+  Object.keys(map).forEach(id=>{
+    const eln=$(id);if(!eln)return;
+    const handler=()=>{
+      const key=map[id];
+      const raw=eln.value;
+      const value=(id==='ip-inicio'||id==='ip-venc')?raw:(parseFloat(raw)||0);
+      ipcaSave({[key]:value});
+      clearTimeout(t);t=setTimeout(updateIpcaResults,300);   // atualiza SÓ resultados
+    };
+    eln.addEventListener('input',handler);
+    eln.addEventListener('change',handler);   // datas e blur
+  });
+}
 function ipcaYearTable(cfg,start,venc){
   if(!start||!venc)return '';
   const rows=[];
@@ -1498,22 +1603,6 @@ function ipcaSimTable(cfg,venc){
       '</tr>';
   }).join('');
   return '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
-}
-
-/* liga o salvamento automático dos campos e re-renderiza em tempo real */
-function wireIpcaFields(){
-  const map={'ip-inicial':'inicial','ip-mensal':'mensal','ip-real':'real','ip-ipca':'ipca','ip-b3':'b3','ip-preco':'preco','ip-inicio':'inicio','ip-venc':'vencimento'};
-  let t=null;
-  Object.keys(map).forEach(id=>{
-    const eln=$(id);if(!eln)return;
-    eln.addEventListener('input',()=>{
-      const key=map[id];
-      const raw=eln.value;
-      const value=(id==='ip-inicio'||id==='ip-venc')?raw:(parseFloat(raw)||0);
-      ipcaSave({[key]:value});
-      clearTimeout(t);t=setTimeout(()=>renderInvPage(),450);   // atualiza cálculos e gráfico
-    });
-  });
 }
 
 /* gráfico de linha: total aportado × valor líquido projetado, ano a ano */
