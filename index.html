@@ -744,7 +744,7 @@ details[open]>summary{color:var(--green)!important}
             <div id="ch-leg" style="margin-top:12px;display:flex;flex-direction:column;gap:5px"></div>
           </div>
           <div class="card">
-            <div class="sec" style="margin-top:0;margin-bottom:14px"><h2>Histórico — 6 meses</h2><span class="badge bg">Salário × Saídas</span></div>
+            <div class="sec" style="margin-top:0;margin-bottom:14px"><h2>Histórico mensal</h2><span class="badge bg">Salário × Saídas</span></div>
             <div class="chw"><canvas id="ch-bar"></canvas></div>
           </div>
         </div>
@@ -1362,9 +1362,27 @@ async function renderDash(){
     legEl.innerHTML='<div class="empty" style="padding:20px"><div class="empty-ico">📊</div><p>Adicione movimentos para ver a distribuição</p></div>';
   }
 
-  // barras 6 meses (terminando no mês selecionado)
-  const l6=[];for(let i=5;i>=0;i--){const d=new Date(ST.sel.y,ST.sel.m-1-i,1);l6.push({m:d.getMonth()+1,y:d.getFullYear()})}
-  const bL=l6.map(({m})=>MO[m-1].slice(0,3));
+  // Histórico: mostra sempre todos os meses com dados salvos.
+  // A janela termina no mês MAIS RECENTE entre (a) meses com dados e
+  // (b) o mês selecionado — assim Jul/Ago/Set aparecem mesmo se você
+  // estiver navegando em um mês anterior. Mínimo de 6 colunas.
+  const monthIndex=(m,y)=>y*12+(m-1);            // índice absoluto p/ comparar
+  const selIdx=monthIndex(ST.sel.m,ST.sel.y);
+  // meses que têm salário registrado OU movimentos vinculados
+  const dataIdx=ST.months
+    .filter(s=>Number(s.gross_amount)>0 || ST.movs.some(v=>v.salary_month_id===s.id))
+    .map(s=>monthIndex(s.month,s.year));
+  const maxDataIdx=dataIdx.length?Math.max(...dataIdx):selIdx;
+  const minDataIdx=dataIdx.length?Math.min(...dataIdx):selIdx;
+  const endIdx=Math.max(maxDataIdx,selIdx);      // termina no mais recente
+  // começa cedo o suficiente para caber todos os dados (e o mês selecionado),
+  // sempre mostrando no mínimo 6 colunas
+  const startIdx=Math.min(endIdx-5,minDataIdx,selIdx);
+  const l6=[];
+  for(let idx=startIdx;idx<=endIdx;idx++){
+    l6.push({m:(idx%12)+1,y:Math.floor(idx/12)});
+  }
+  const bL=l6.map(({m,y})=>MO[m-1].slice(0,3)+(l6.length>7?'/'+String(y).slice(2):''));
   const bS=l6.map(({m,y})=>{const s=ST.months.find(x=>x.month===m&&x.year===y);return s?Number(s.gross_amount):0});
   const bE=l6.map(({m,y})=>{const s=ST.months.find(x=>x.month===m&&x.year===y);if(!s)return 0;
     return ST.movs.filter(v=>v.salary_month_id===s.id&&v.type==='saida').reduce((a,v)=>a+Number(v.amount),0)});
