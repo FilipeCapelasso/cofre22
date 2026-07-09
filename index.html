@@ -388,6 +388,10 @@ input.inp[type=number]{font-family:var(--m)}
   .ip-hero{padding:18px}
   .ip-hero-title{font-size:16px}
 }
+.ap-row{display:flex;align-items:center;gap:12px;padding:10px 13px;border-radius:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+  border:1px solid var(--b);transition:transform .18s var(--ease),border-color .18s}
+.ap-row:hover{transform:translateX(3px);border-color:var(--bh)}
 </style>
 </head>
 <body>
@@ -543,10 +547,13 @@ input.inp[type=number]{font-family:var(--m)}
       </div>
 
       <!-- SALARY -->
-      <div class="page" id="pg-salary"><div id="salary-list"></div></div>
-
-      <!-- MOVEMENTS -->
+      <!-- RECEITAS E MOVIMENTOS (unificado) -->
       <div class="page" id="pg-movements">
+        <div class="sec" style="margin-top:0"><h2>Salário do mês</h2>
+          <button class="btn btn-g btn-sm" data-act="openAddSalary" type="button">Adicionar salário</button></div>
+        <div id="salary-list" style="margin-bottom:18px"></div>
+        <div class="sec"><h2>Movimentos</h2>
+          <button class="btn btn-g btn-sm" data-act="openAddMov" type="button">Adicionar movimentação</button></div>
         <div class="fbar">
           <input class="inp" id="mf-q" type="search" placeholder="🔍 Buscar descrição..." style="min-width:200px"/>
           <select class="inp" id="mf-m"><option value="">Todos os meses</option></select>
@@ -941,11 +948,9 @@ async function schemaSelfTest(){
 const NAV=[
   {id:'dashboard',t:'Dashboard',s:'Visão geral das suas finanças',a:null,
     ico:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>'},
-  {id:'salary',t:'Salário',s:'Salário e resumo do mês selecionado',
-    ico:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'},
-  {id:'movements',t:'Movimentos',s:'Entradas, saídas, reservas e investimentos',act:'openAddMov',aLabel:'+ Movimento',
+  {id:'movements',t:'Receitas e Movimentos',s:'Salário, entradas, saídas, reservas e investimentos',
     ico:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1.5" fill="currentColor"/><circle cx="3.5" cy="12" r="1.5" fill="currentColor"/><circle cx="3.5" cy="18" r="1.5" fill="currentColor"/>'},
-  {id:'investments',t:'Investimentos',s:'Planejador Tesouro IPCA+ 2032',
+  {id:'investments',t:'Investimentos',s:'Painel de investimentos',
     ico:'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>'},
   {id:'debts',t:'Dívidas',s:'Parcelas e pagamentos',act:'openAddDebt',aLabel:'+ Nova dívida',
     ico:'<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>'},
@@ -969,8 +974,13 @@ async function nav(page){
   await loadPage(page);
 }
 async function loadPage(p){
-  const fn={dashboard:renderDash,salary:renderSalary,movements:renderMovPage,investments:renderInvPage,debts:renderDebtPage}[p];
+  const fn={dashboard:renderDash,movements:renderMovAndSalary,investments:renderInvPage,debts:renderDebtPage}[p];
   if(fn)await fn();
+}
+/* tela unificada: salário no topo + movimentos abaixo */
+async function renderMovAndSalary(){
+  await renderSalary();
+  await renderMovPage();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1013,7 +1023,7 @@ async function sync(force=false){
    • Criação preguiçosa: o registro salary_months só é gravado no
      banco quando o usuário digita o primeiro valor (ensureMonth()).
 ══════════════════════════════════════════════════════════════ */
-const MONTH_SCOPED=['dashboard','salary','movements'];   // telas que reagem ao mês
+const MONTH_SCOPED=['dashboard','movements'];   // telas que reagem ao mês
 
 function initSelectedMonth(){
   // 1) tenta o último mês visto (salvo por usuário); 2) senão, mês atual
@@ -1184,14 +1194,14 @@ async function renderSalary(){
   const notes=sm?.notes||'';
 
   el.innerHTML=
-    '<div class="card" style="margin-bottom:12px">'+
+    '<div class="card ip-today" style="margin-bottom:0">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">'+
         '<div style="flex:1;min-width:200px">'+
-          '<div style="font-size:16px;font-weight:700">'+esc(ml(ST.sel.m,ST.sel.y))+'</div>'+
-          '<div style="font-size:12px;color:var(--t3);margin-top:2px">'+mm.length+' movimento'+(mm.length===1?'':'s')+'</div>'+
+          '<div style="font-size:16px;font-weight:700">💵 Salário de '+esc(ml(ST.sel.m,ST.sel.y))+'</div>'+
+          '<div style="font-size:12px;color:var(--t3);margin-top:2px">'+mm.length+' movimento'+(mm.length===1?'':'s')+' no mês</div>'+
           '<div style="margin-top:14px">'+
             '<label class="lbl">Salário bruto (salva automaticamente)</label>'+
-            '<input class="inp" id="sal-gross" type="number" step="0.01" min="0" value="'+(gross||'')+'" placeholder="0,00" style="max-width:220px;font-size:16px;font-weight:700"/>'+
+            '<input class="inp" id="sal-gross" type="text" inputmode="decimal" autocomplete="off" value="'+(gross||'')+'" placeholder="0,00" style="max-width:220px;font-size:16px;font-weight:700"/>'+
             '<span id="sal-status" style="font-size:11.5px;color:var(--t3);margin-left:10px"></span>'+
           '</div>'+
           '<div style="margin-top:12px">'+
@@ -1203,19 +1213,14 @@ async function renderSalary(){
           '<div style="font-family:var(--m);font-size:22px;font-weight:700;color:var(--green)">'+fmt(gross)+'</div>'+
           '<div style="font-size:12px;color:var(--red);margin-top:2px">Saídas: '+fmt(exp)+'</div>'+
           '<div style="font-size:12px;color:var(--indigo);margin-top:2px">Entradas: '+fmt(inc)+'</div>'+
+          '<div style="font-size:12px;color:var(--amber);margin-top:2px">Reservas: '+fmt(res)+'</div>'+
         '</div>'+
       '</div>'+
       '<div class="prog" style="margin-top:16px"><div class="pf pfa" style="width:'+pct+'%"></div></div>'+
       '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--t3)">'+
         '<span>'+pct.toFixed(0)+'% distribuído</span><span>Inv: '+fmt(inv)+' · Res: '+fmt(res)+'</span></div>'+
-      (mm.length?'<div class="dv"></div><div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Movimentos do mês</div>'+
-        mm.slice(0,6).map(v=>mviHTML(v,true)).join('')+
-        (mm.length>6?'<div style="text-align:center;margin-top:8px"><button class="btn btn-o btn-sm" data-nav="movements" type="button">Ver todos ('+mm.length+') →</button></div>':'')
-        :'<div class="dv"></div><div class="empty" style="padding:24px"><div class="empty-ico">📭</div><p>Nenhum movimento neste mês ainda.</p></div>')+
-      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">'+
-        '<button class="btn btn-g btn-sm" data-act="openAddMov" type="button">+ Movimento</button>'+
-        (sm?'<button class="btn btn-r btn-sm" data-act="delSalary" data-arg="'+esc(sm.id)+'" type="button">Excluir mês</button>':'')+
-      '</div>'+
+      (sm?'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">'+
+        '<button class="btn btn-r btn-sm" data-act="delSalary" data-arg="'+esc(sm.id)+'" type="button">Excluir mês</button></div>':'')+
     '</div>';
 
   // auto-save do salário (cria o mês preguiçosamente se ainda não existe)
@@ -1241,8 +1246,8 @@ function wireAutoSaveSalary(){
     }
   };
   const debounced=(patch)=>{clearTimeout(t);t=setTimeout(()=>flush(patch),600)};
-  gEl.addEventListener('input',()=>{const v=parseFloat(gEl.value)||0;debounced({gross_amount:v})});
-  gEl.addEventListener('blur',()=>{clearTimeout(t);const v=parseFloat(gEl.value)||0;flush({gross_amount:v})});
+  gEl.addEventListener('input',()=>{const v=brNum(gEl.value);debounced({gross_amount:v})});
+  gEl.addEventListener('blur',()=>{clearTimeout(t);const v=brNum(gEl.value);flush({gross_amount:v})});
   nEl.addEventListener('input',()=>debounced({notes:nEl.value.trim()}));
 }
 
@@ -1386,11 +1391,7 @@ function brNum(raw){
   const n=parseFloat(s);
   return isNaN(n)?0:n;
 }
-function ipcaSave(patch){
-  const cur=ipcaCfg();
-  LS.s('ipcaPlan_'+(uid()||'x'),Object.assign({},cur,patch));
-}
-/* taxa nominal líquida anual (decimal): compõe real sobre IPCA e desconta B3 */
+/* taxa nominal líquida anual (decimal): compõe real sobre índice e desconta B3 */
 function ipcaAnnualNet(cfg){
   const nominal=(1+cfg.real/100)*(1+cfg.ipca/100)-1;
   return nominal-(cfg.b3||0)/100;
@@ -1402,38 +1403,118 @@ function irRate(days){
   if(days<=720)return 0.175;
   return 0.15;
 }
-/* monta a lista de aportes (inicial + mensais) do início ao vencimento */
-function ipcaContribs(cfg){
-  const start=parseDate(cfg.inicio)||new Date();
-  const end=parseDate(cfg.vencimento)||start;
-  const list=[{date:new Date(start),amount:Number(cfg.inicial)||0,kind:'inicial'}];
-  const d=new Date(start);d.setMonth(d.getMonth()+1);
-  let guard=0;
-  while(d<=end&&guard<600){list.push({date:new Date(d),amount:Number(cfg.mensal)||0,kind:'mensal'});d.setMonth(d.getMonth()+1);guard++}
-  return list;
+
+/* ══════════════════════════════════════════════════════════════
+   INVESTIMENTO ATIVO (persistido no banco)
+   • name = título editável · product = tipo/descrição (+vencimento
+     embutido como "|venc:AAAA-MM-DD", invisível ao usuário)
+   • aportes reais em investment_contributions são a BASE dos cálculos
+   • parâmetros de projeção (taxa, ipca, aporte mensal futuro) ficam
+     no localStorage por investimento, pois são cenários hipotéticos
+══════════════════════════════════════════════════════════════ */
+const VENC_RE=/\|venc:(\d{4}-\d{2}-\d{2})/;
+function invGetVenc(inv){const m=inv&&inv.product?String(inv.product).match(VENC_RE):null;return m?m[1]:'2032-08-15';}
+function invGetType(inv){return inv&&inv.product?String(inv.product).replace(VENC_RE,'').trim():'';}
+function invEncodeProduct(tipo,venc){return (tipo||'').trim()+(venc?' |venc:'+venc:'')}
+/* devolve o investimento ativo (o primeiro do usuário) ou null */
+function activeInv(){return ST.invs&&ST.invs.length?ST.invs[0]:null}
+/* aportes reais do investimento ativo, em ordem cronológica (mais antigo primeiro) */
+function activeContribs(){
+  const inv=activeInv();if(!inv)return [];
+  return ST.contribs.filter(c=>c.investment_id===inv.id)
+    .slice().sort((a,b)=>{
+      const da=parseDate(a.contribution_date)||parseDate(a.created_at)||0;
+      const db=parseDate(b.contribution_date)||parseDate(b.created_at)||0;
+      return da-db;
+    });
 }
-/* projeta o investimento numa data futura: aportado, bruto, IR, líquido */
-function ipcaProjectAt(cfg,atDate){
-  const annualNet=ipcaAnnualNet(cfg);
+/* garante que exista um investimento ativo no banco; cria um padrão se não houver */
+async function ensureActiveInv(){
+  let inv=activeInv();
+  if(inv)return inv;
+  const cfg=ipcaCfg();
+  const payload={
+    name:cfg.nome||'Tesouro IPCA+ 2032',
+    product:invEncodeProduct('IPCA+',cfg.vencimento||'2032-08-15'),
+    amount_invested:0,current_value:0,
+    return_rate:cfg.real||8.28,
+    purchase_date:cfg.inicio||new Date().toISOString().split('T')[0],
+    user_id:uid()
+  };
+  const r=await SB.ins('investments',payload);
+  inv=r&&r[0];
+  if(inv)ST.invs.unshift(inv);
+  return inv;
+}
+/* parâmetros de PROJEÇÃO por investimento (localStorage) — taxa, ipca, cdi,
+   selic, b3, preço unitário e aporte mensal futuro */
+const PROJ_DEFAULTS={real:8.28,ipca:4.50,b3:0.20,preco:2927.89,mensal:300};
+function projCfg(){
+  const inv=activeInv();
+  const key='invProj_'+(uid()||'x')+'_'+(inv?inv.id:'none');
+  const saved=LS.g(key)||{};
+  return Object.assign({},PROJ_DEFAULTS,saved);
+}
+function projSave(patch){
+  const inv=activeInv();
+  const key='invProj_'+(uid()||'x')+'_'+(inv?inv.id:'none');
+  LS.s(key,Object.assign({},projCfg(),patch));
+}
+/* cálculo baseado em APORTES REAIS: cada aporte rende desde a própria data */
+function realProjectAt(atDate,annualNet){
   let gross=0,invested=0,ir=0;
-  for(const c of ipcaContribs(cfg)){
-    if(c.date>atDate)continue;
-    const days=(atDate-c.date)/DAY_MS;
-    const grown=c.amount*Math.pow(1+annualNet,days/365);
-    const gain=grown-c.amount;
-    gross+=grown;invested+=c.amount;
+  for(const c of activeContribs()){
+    const cd=parseDate(c.contribution_date)||parseDate(c.created_at);
+    if(!cd||cd>atDate)continue;
+    const days=(atDate-cd)/DAY_MS;
+    const grown=Number(c.amount)*Math.pow(1+annualNet,days/365);
+    const gain=grown-Number(c.amount);
+    gross+=grown;invested+=Number(c.amount);
     if(gain>0)ir+=gain*irRate(days);
+  }
+  return {invested,gross,gain:gross-invested,ir,net:gross-ir,netGain:gross-ir-invested};
+}
+/* projeção FUTURA: parte dos aportes reais até hoje e adiciona aportes
+   mensais hipotéticos daqui até o vencimento */
+function futureProjectAt(atDate,annualNet,mensal){
+  const now=new Date();
+  let gross=0,invested=0,ir=0;
+  // aportes reais já feitos
+  for(const c of activeContribs()){
+    const cd=parseDate(c.contribution_date)||parseDate(c.created_at);
+    if(!cd||cd>atDate)continue;
+    const days=(atDate-cd)/DAY_MS;
+    const grown=Number(c.amount)*Math.pow(1+annualNet,days/365);
+    gross+=grown;invested+=Number(c.amount);
+    const gain=grown-Number(c.amount);if(gain>0)ir+=gain*irRate(days);
+  }
+  // aportes mensais futuros (do próximo mês até atDate)
+  if(mensal>0){
+    const d=new Date(now.getFullYear(),now.getMonth()+1,now.getDate());
+    let guard=0;
+    while(d<=atDate&&guard<600){
+      const days=(atDate-d)/DAY_MS;
+      const grown=mensal*Math.pow(1+annualNet,days/365);
+      gross+=grown;invested+=mensal;
+      const gain=grown-mensal;if(gain>0)ir+=gain*irRate(days);
+      d.setMonth(d.getMonth()+1);guard++;
+    }
   }
   return {invested,gross,gain:gross-invested,ir,net:gross-ir,netGain:gross-ir-invested};
 }
 
 async function renderInvPage(){
   if(!(await sync()))return;
-  const cfg=ipcaCfg();
+  const inv=await ensureActiveInv();               // garante investimento no banco
   const el=$('inv-list');
-  const venc=parseDate(cfg.vencimento),now=new Date();
+  const proj=projCfg();
+  const nome=inv?inv.name:'Meu investimento';
+  const tipo=invGetType(inv);
+  const vencStr=invGetVenc(inv);
+  const inicioStr=(inv&&inv.purchase_date)?inv.purchase_date:new Date().toISOString().split('T')[0];
+  const taxa=(inv&&inv.return_rate!=null)?Number(inv.return_rate):proj.real;
+  const venc=parseDate(vencStr),now=new Date();
   const diasAteVenc=venc?Math.max(Math.ceil((venc-now)/DAY_MS),0):0;
-  const anosAteVenc=(diasAteVenc/365);
 
   const field=(id,label,val,suffix,icon)=>
     '<div class="ip-field"><label class="lbl" for="'+id+'">'+(icon?icon+' ':'')+label+'</label>'+
@@ -1442,73 +1523,104 @@ async function renderInvPage(){
     (suffix?' style="padding-right:44px"':'')+'/>'+
     (suffix?'<span class="ip-suffix">'+suffix+'</span>':'')+
     '</div></div>';
+  const tfield=(id,label,val,icon,ph)=>
+    '<div class="ip-field"><label class="lbl" for="'+id+'">'+(icon?icon+' ':'')+label+'</label>'+
+    '<input class="inp ipca-fld" id="'+id+'" type="text" autocomplete="off" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'"/></div>';
   const dfield=(id,label,val,icon)=>
     '<div class="ip-field"><label class="lbl" for="'+id+'">'+(icon?icon+' ':'')+label+'</label>'+
     '<input class="inp ipca-fld" id="'+id+'" type="date" value="'+esc(val)+'"/></div>';
 
-  // ── ESTRUTURA MONTADA UMA ÚNICA VEZ ──
-  // Os inputs ficam em #ipca-inputs (nunca recriados na digitação).
-  // Só #ipca-results é atualizado a cada tecla → o foco nunca se perde.
+  // ── ESTRUTURA MONTADA UMA ÚNICA VEZ (inputs não são recriados ao digitar) ──
   el.innerHTML=
-    // cabeçalho
+    // cabeçalho dinâmico
     '<div class="ip-hero">'+
       '<div class="ip-hero-glow"></div>'+
       '<div style="position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'+
-        '<div><div class="ip-hero-title">🏛️ '+esc(cfg.nome)+'</div>'+
-          '<div class="ip-hero-sub" id="ip-hero-sub">IPCA + '+esc(cfg.real.toFixed(2))+'% a.a. · vence em '+(venc?venc.toLocaleDateString('pt-BR'):'—')+'</div></div>'+
+        '<div><div class="ip-hero-title" id="ip-hero-title">🏛️ '+esc(nome)+'</div>'+
+          '<div class="ip-hero-sub" id="ip-hero-sub"></div></div>'+
         '<div style="text-align:right"><span class="ip-countdown" id="ip-countdown">faltam '+diasAteVenc+' dias</span>'+
-          '<div style="font-size:11px;color:var(--t3);margin-top:6px" id="ip-years">≈ '+anosAteVenc.toFixed(1)+' anos até o vencimento</div></div>'+
+          '<div style="font-size:11px;color:var(--t3);margin-top:6px" id="ip-years"></div></div>'+
       '</div>'+
     '</div>'+
 
-    // parâmetros editáveis — montados UMA vez
-    '<div class="sec"><h2>Meu plano</h2><span class="badge bs">💾 salva automaticamente</span></div>'+
+    // identificação do título (editável, salva no banco)
+    '<div class="sec"><h2>Identificação</h2><span class="badge bs">💾 salva no banco</span></div>'+
+    '<div class="card ip-plan" style="margin-bottom:16px">'+
+      '<div id="ipid-inputs" class="ip-grid">'+
+        tfield('iv-nome','Nome do investimento',nome,'🏷️','Ex: Tesouro IPCA+ 2032')+
+        tfield('iv-tipo','Tipo / descrição',tipo,'📁','Ex: IPCA + 8,28% a.a.')+
+        dfield('iv-inicio','Data de início',inicioStr,'▶️')+
+        dfield('iv-venc','Vencimento',vencStr,'🏁')+
+      '</div>'+
+    '</div>'+
+
+    // parâmetros de projeção (localStorage) — taxa/índices/aporte mensal futuro
+    '<div class="sec"><h2>Parâmetros de projeção</h2><span class="badge bs">simulação</span></div>'+
     '<div class="card ip-plan" style="margin-bottom:16px">'+
       '<div id="ipca-inputs" class="ip-grid">'+
-        field('ip-inicial','Valor inicial',cfg.inicial,'R$','💰')+
-        field('ip-mensal','Aporte mensal',cfg.mensal,'R$','📅')+
-        field('ip-real','Taxa real (IPCA+)',cfg.real,'%','📈')+
-        field('ip-ipca','IPCA estimado',cfg.ipca,'%','🔥')+
-        field('ip-b3','Taxa B3',cfg.b3,'%','🏦')+
-        field('ip-preco','Preço unitário',cfg.preco,'R$','🎫')+
-        dfield('ip-inicio','Data de início',cfg.inicio,'▶️')+
-        dfield('ip-venc','Vencimento',cfg.vencimento,'🏁')+
+        field('ip-real','Taxa real / índice',taxa,'%','📈')+
+        field('ip-ipca','IPCA / inflação est.',proj.ipca,'%','🔥')+
+        field('ip-b3','Taxa B3',proj.b3,'%','🏦')+
+        field('ip-preco','Preço unitário',proj.preco,'R$','🎫')+
+        field('ip-mensal','Aporte mensal futuro',proj.mensal,'R$','📅')+
       '</div>'+
       '<div class="ip-ratehint" id="ip-ratehint"></div>'+
     '</div>'+
 
-    // zona de resultados — ÚNICA parte recalculada a cada tecla
+    // card de APORTES (base real dos cálculos)
+    '<div class="sec"><h2>Aportes do investimento</h2>'+
+      '<button class="btn btn-g btn-sm" data-act="openAddAporte" type="button">+ Adicionar aporte</button></div>'+
+    '<div id="aportes-card"></div>'+
+
+    // zona de resultados — recalculada ao editar
     '<div id="ipca-results"></div>';
 
-  wireIpcaFields();      // liga listeners UMA vez (nos inputs que não serão recriados)
-  updateIpcaResults();   // preenche resultados + gráfico
+  wireInvIdentity();     // liga campos do banco (nome/tipo/datas)
+  wireIpcaFields();      // liga parâmetros de projeção
+  updateIpcaResults();   // preenche aportes + resultados + gráfico
 }
 
-/* Atualiza SOMENTE a zona de resultados (não toca nos inputs → foco preservado) */
+/* Atualiza aportes reais + resultados + gráfico (não recria inputs → foco ok) */
 function updateIpcaResults(){
-  const cfg=ipcaCfg();
   const box=$('ipca-results');if(!box)return;
-  const start=parseDate(cfg.inicio),venc=parseDate(cfg.vencimento),now=new Date();
-  const annualNet=ipcaAnnualNet(cfg);
-  const nominal=(1+cfg.real/100)*(1+cfg.ipca/100)-1;
-  const contribs=ipcaContribs(cfg);
+  const inv=activeInv();
+  const proj=projCfg();
+  const vencStr=invGetVenc(inv);
+  const venc=parseDate(vencStr),now=new Date();
+  // taxa vem do banco (return_rate); índices de projeção do localStorage
+  const taxaReal=(inv&&inv.return_rate!=null)?Number(inv.return_rate):proj.real;
+  const cfgRate={real:taxaReal,ipca:proj.ipca,b3:proj.b3};
+  const annualNet=ipcaAnnualNet(cfgRate);
+  const nominal=(1+taxaReal/100)*(1+proj.ipca/100)-1;
+
+  const contribs=activeContribs();
   const nAportes=contribs.length;
-  const totalAportado=contribs.reduce((a,c)=>a+c.amount,0);
-  const fin=ipcaProjectAt(cfg,venc);
-  const hoje=ipcaProjectAt(cfg,now);
+  const valorInicial=nAportes?Number(contribs[0].amount):0;
+  const totalAportes=contribs.slice(1).reduce((a,c)=>a+Number(c.amount),0);
+  const totalInvestido=contribs.reduce((a,c)=>a+Number(c.amount),0);
   const diasAteVenc=venc?Math.max(Math.ceil((venc-now)/DAY_MS),0):0;
-  const qtdTitulos=cfg.preco>0?(cfg.inicial/cfg.preco):0;
-  const rentLiquidaPct=totalAportado>0?(fin.netGain/totalAportado)*100:0;
   const money=v=>'<span style="font-family:var(--m)">'+fmt(v)+'</span>';
 
-  // atualiza cabeçalho e dica de taxa (sem recriar inputs)
-  const subEl=$('ip-hero-sub');if(subEl)subEl.textContent='IPCA + '+cfg.real.toFixed(2)+'% a.a. · vence em '+(venc?venc.toLocaleDateString('pt-BR'):'—');
+  // cabeçalho dinâmico
+  const nome=inv?inv.name:'—',tipo=invGetType(inv);
+  const htEl=$('ip-hero-title');if(htEl)htEl.innerHTML='🏛️ '+esc(nome);
+  const subEl=$('ip-hero-sub');if(subEl)subEl.textContent=(tipo?tipo+' · ':'')+'vence em '+(venc?venc.toLocaleDateString('pt-BR'):'—');
   const cdEl=$('ip-countdown');if(cdEl)cdEl.textContent='faltam '+diasAteVenc+' dias';
-  const yrEl=$('ip-years');if(yrEl)yrEl.textContent='≈ '+(diasAteVenc/365).toFixed(1)+' anos até o vencimento';
+  const anos=Math.floor(diasAteVenc/365),meses=Math.round(diasAteVenc/30.44);
+  const yrEl=$('ip-years');if(yrEl)yrEl.textContent='≈ '+anos+' anos · ≈ '+meses+' meses';
   const hint=$('ip-ratehint');
   if(hint)hint.innerHTML='💡 Taxa nominal estimada: <strong style="color:var(--amber)">'+(nominal*100).toFixed(2)+'% a.a.</strong> '+
-    '(IPCA '+cfg.ipca.toFixed(2)+'% + real '+cfg.real.toFixed(2)+'%). Descontando a B3: <strong style="color:var(--indigo)">'+(annualNet*100).toFixed(2)+'% a.a.</strong> líquida. '+
-    'Como o IPCA futuro é incerto, ajuste "IPCA estimado" para simular cenários.';
+    '(índice '+proj.ipca.toFixed(2)+'% + '+taxaReal.toFixed(2)+'%). Líquida da B3: <strong style="color:var(--indigo)">'+(annualNet*100).toFixed(2)+'% a.a.</strong> '+
+    'Os cálculos usam seus aportes reais; o aporte mensal futuro é só projeção.';
+
+  // ── CARD DE APORTES + HISTÓRICO ──
+  renderAportesCard(valorInicial,totalAportes,totalInvestido,proj.mensal,nAportes,contribs);
+
+  // sem aportes ainda: mostra convite e projeção zerada
+  const fin=venc?futureProjectAt(venc,annualNet,proj.mensal):{invested:0,gross:0,gain:0,ir:0,net:0,netGain:0};
+  const hoje=realProjectAt(now,annualNet);
+  const rentLiquidaPct=fin.invested>0?(fin.netGain/fin.invested)*100:0;
+  const qtdTitulos=proj.preco>0?(valorInicial/proj.preco):0;
 
   const bigbox=(label,value,cls,sub)=>
     '<div class="ip-stat '+(cls||'')+'">'+
@@ -1517,80 +1629,154 @@ function updateIpcaResults(){
       (sub?'<div class="ip-stat-sub">'+sub+'</div>':'')+'</div>';
 
   box.innerHTML=
-    '<div class="sec"><h2>Projeção no vencimento'+(venc?' ('+venc.toLocaleDateString('pt-BR')+')':'')+'</h2></div>'+
+    '<div class="sec"><h2>Projeção no vencimento'+(venc?' ('+venc.toLocaleDateString('pt-BR')+')':'')+'</h2>'+
+      '<span class="badge bi">reais + mensal futuro</span></div>'+
     '<div class="ip-stats" style="margin-bottom:16px">'+
-      bigbox('Total aportado',money(totalAportado),'s-neutral',nAportes+' aportes')+
+      bigbox('Total investido (proj.)',money(fin.invested),'s-neutral','reais + futuros')+
       bigbox('Valor bruto',money(fin.gross),'s-indigo','antes de impostos')+
       bigbox('IR previsto',money(fin.ir),'s-amber','tabela regressiva')+
       bigbox('Valor líquido',money(fin.net),'s-green','já com IR')+
       bigbox('Rendimento líquido',money(fin.netGain),fin.netGain>=0?'s-green':'s-red','lucro após IR')+
-      bigbox('Rentabilidade',rentLiquidaPct.toFixed(1)+'%','s-green','sobre o aportado')+
+      bigbox('Rentabilidade',rentLiquidaPct.toFixed(1)+'%','s-green','sobre o investido')+
     '</div>'+
 
     '<div class="card ip-today" style="margin-bottom:16px">'+
       '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px">'+
-        '<div><div class="card-lbl">Valor estimado hoje</div>'+
+        '<div><div class="card-lbl">Valor estimado hoje (aportes reais)</div>'+
           '<div class="ip-today-val">'+fmt(hoje.gross)+'</div>'+
-          '<div class="card-sub">aportado: '+fmt(hoje.invested)+' · juros: '+fmt(hoje.gain)+'</div></div>'+
-        '<div style="text-align:right"><div class="card-lbl">Títulos no aporte inicial</div>'+
+          '<div class="card-sub">investido: '+fmt(hoje.invested)+' · juros: '+fmt(hoje.gain)+'</div></div>'+
+        '<div style="text-align:right"><div class="card-lbl">Títulos (aporte inicial)</div>'+
           '<div class="ip-today-val" style="-webkit-text-fill-color:var(--t1)">'+qtdTitulos.toFixed(4)+'</div>'+
-          '<div class="card-sub">a '+fmt(cfg.preco)+' cada</div></div>'+
+          '<div class="card-sub">a '+fmt(proj.preco)+' cada</div></div>'+
       '</div>'+
     '</div>'+
 
     '<div class="card" style="margin-bottom:16px">'+
-      '<div class="sec" style="margin-top:0;margin-bottom:14px"><h2>Evolução projetada</h2><span class="badge bg">Aportado × Líquido</span></div>'+
+      '<div class="sec" style="margin-top:0;margin-bottom:14px"><h2>Evolução projetada</h2><span class="badge bg">Investido × Líquido</span></div>'+
       '<div class="chw" style="height:250px"><canvas id="ch-ipca"></canvas></div>'+
     '</div>'+
 
     '<div class="sec"><h2>Previsão ano a ano</h2></div>'+
-    '<div class="card ip-tablecard" style="margin-bottom:16px;overflow-x:auto">'+ipcaYearTable(cfg,start,venc)+'</div>'+
+    '<div class="card ip-tablecard" style="margin-bottom:16px;overflow-x:auto">'+invYearTable(annualNet,proj.mensal,venc)+'</div>'+
 
     '<div class="sec"><h2>E se eu aumentar o aporte mensal?</h2></div>'+
-    '<div class="card ip-tablecard" style="margin-bottom:16px;overflow-x:auto">'+ipcaSimTable(cfg,venc)+'</div>'+
+    '<div class="card ip-tablecard" style="margin-bottom:16px;overflow-x:auto">'+invSimTable(annualNet,proj.mensal,venc)+'</div>'+
 
     '<details class="card" style="margin-bottom:16px"><summary style="cursor:pointer;font-size:13px;font-weight:700">📋 Características do título</summary>'+
       '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;font-size:12.5px;color:var(--t2)">'+
         '<div>Pagamento de juros: <strong style="color:var(--t1)">no vencimento</strong></div>'+
         '<div>IR sobre o rendimento: <strong style="color:var(--t1)">22,5% → 15%</strong></div>'+
         '<div>IOF: <strong style="color:var(--t1)">isento após 30 dias</strong></div>'+
-        '<div>Taxa da B3: <strong style="color:var(--t1)">'+cfg.b3.toFixed(2)+'% a.a.</strong></div>'+
+        '<div>Taxa da B3: <strong style="color:var(--t1)">'+proj.b3.toFixed(2)+'% a.a.</strong></div>'+
         '<div>Liquidação: <strong style="color:var(--t1)">1 dia útil</strong></div>'+
-        '<div>Valor mínimo: <strong style="color:var(--t1)">'+fmt(cfg.preco*0.01)+'</strong></div>'+
+        '<div>Valor mínimo: <strong style="color:var(--t1)">'+fmt(proj.preco*0.01)+'</strong></div>'+
       '</div></details>';
 
-  drawIpcaChart(cfg,start,venc);
+  drawInvChart(annualNet,proj.mensal,venc);
+}
+
+/* Card "Aportes do investimento" + histórico editável */
+function renderAportesCard(valorInicial,totalAportes,totalInvestido,mensal,n,contribs){
+  const wrap=$('aportes-card');if(!wrap)return;
+  const mini=(lbl,val,cls)=>'<div class="ip-stat '+(cls||'')+'" style="padding:13px 14px">'+
+    '<div class="ip-stat-lbl">'+lbl+'</div><div class="ip-stat-val" style="font-size:16px">'+val+'</div></div>';
+  let hist='';
+  if(n){
+    hist='<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Histórico de aportes</div>'+
+      '<div style="display:flex;flex-direction:column;gap:7px">'+
+      contribs.map((c,i)=>{
+        const d=parseDate(c.contribution_date)||parseDate(c.created_at);
+        const lbl=i===0?'Aplicação inicial':'Aporte';
+        return '<div class="ap-row">'+
+          '<div style="flex:1;min-width:0">'+
+            '<div style="font-size:12.5px;font-weight:600">'+(d?d.toLocaleDateString('pt-BR'):'—')+' · <span style="color:var(--t2);font-weight:500">'+esc(lbl)+'</span></div>'+
+            (c.notes?'<div style="font-size:11px;color:var(--t3);margin-top:2px">'+esc(c.notes)+'</div>':'')+
+          '</div>'+
+          '<div style="font-family:var(--m);font-weight:700;color:var(--green)">'+fmt(c.amount)+'</div>'+
+          '<div style="display:flex;gap:4px">'+
+            '<button class="btn btn-o btn-ic btn-sm" data-act="openEditAporte" data-arg="'+esc(c.id)+'" title="Editar" type="button">✎</button>'+
+            '<button class="btn btn-r btn-ic btn-sm" data-act="delAporte" data-arg="'+esc(c.id)+'" title="Excluir" type="button">🗑</button>'+
+          '</div></div>';
+      }).join('')+
+      '</div></div>';
+  }else{
+    hist='<div class="empty" style="padding:26px"><div class="empty-ico">📥</div><h3>Nenhum aporte ainda</h3><p>Clique em "+ Adicionar aporte" para registrar seu primeiro investimento.</p></div>';
+  }
+  wrap.innerHTML='<div class="card" style="margin-bottom:16px">'+
+    '<div class="ip-stats" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'+
+      mini('Valor inicial',fmt(valorInicial),'s-neutral')+
+      mini('Total de aportes',fmt(totalAportes),'s-indigo')+
+      mini('Total investido',fmt(totalInvestido),'s-green')+
+      mini('Aporte mensal',fmt(mensal),'s-amber')+
+      mini('Qtd. de aportes',String(n),'s-neutral')+
+    '</div>'+hist+'</div>';
 }
 
 /* liga o salvamento automático UMA vez; a digitação NÃO recria os inputs.
    Só a zona de resultados é recalculada (debounce curto) → foco preservado. */
+/* liga os campos de PROJEÇÃO (localStorage). A taxa "real" também
+   atualiza o return_rate do investimento no banco (debounce). */
 function wireIpcaFields(){
-  const map={'ip-inicial':'inicial','ip-mensal':'mensal','ip-real':'real','ip-ipca':'ipca','ip-b3':'b3','ip-preco':'preco','ip-inicio':'inicio','ip-venc':'vencimento'};
-  let t=null;
+  const map={'ip-real':'real','ip-ipca':'ipca','ip-b3':'b3','ip-preco':'preco','ip-mensal':'mensal'};
+  let t=null,tRate=null;
   Object.keys(map).forEach(id=>{
     const eln=$(id);if(!eln)return;
     const handler=()=>{
       const key=map[id];
-      const raw=eln.value;
-      const value=(id==='ip-inicio'||id==='ip-venc')?raw:brNum(raw);
-      ipcaSave({[key]:value});
-      clearTimeout(t);t=setTimeout(updateIpcaResults,300);   // atualiza SÓ resultados
+      const value=brNum(eln.value);
+      projSave({[key]:value});
+      // a taxa "real" é dado do título → persiste no banco também
+      if(key==='real'){
+        const inv=activeInv();
+        if(inv){inv.return_rate=value;
+          clearTimeout(tRate);tRate=setTimeout(()=>{SB.upd('investments',inv.id,{return_rate:value}).catch(()=>{})},700);}
+      }
+      clearTimeout(t);t=setTimeout(updateIpcaResults,300);
     };
     eln.addEventListener('input',handler);
-    eln.addEventListener('change',handler);   // datas e blur
+    eln.addEventListener('change',handler);
   });
 }
-function ipcaYearTable(cfg,start,venc){
-  if(!start||!venc)return '';
-  const rows=[];
+
+/* liga os campos de IDENTIDADE (salvos no banco): nome, tipo, datas.
+   O vencimento é embutido em product para não alterar o schema. */
+function wireInvIdentity(){
+  let t=null;
+  const save=()=>{
+    const inv=activeInv();if(!inv)return;
+    const nome=(($('iv-nome')||{}).value||'').trim()||'Meu investimento';
+    const tipo=(($('iv-tipo')||{}).value||'').trim();
+    const inicio=($('iv-inicio')||{}).value||inv.purchase_date;
+    const venc=($('iv-venc')||{}).value||invGetVenc(inv);
+    const product=invEncodeProduct(tipo,venc);
+    // atualiza estado local imediatamente (para cálculos em tempo real)
+    inv.name=nome;inv.product=product;inv.purchase_date=inicio;
+    updateIpcaResults();
+    clearTimeout(t);t=setTimeout(()=>{
+      SB.upd('investments',inv.id,{name:nome,product:product,purchase_date:inicio}).catch(()=>{});
+    },600);
+  };
+  ['iv-nome','iv-tipo','iv-inicio','iv-venc'].forEach(id=>{
+    const el=$(id);if(!el)return;
+    el.addEventListener('input',save);
+    el.addEventListener('change',save);
+  });
+}
+
+/* tabela ano a ano — usa aportes REAIS + aportes mensais futuros */
+function invYearTable(annualNet,mensal,venc){
+  if(!venc)return '<div style="color:var(--t3);font-size:12px">Defina o vencimento para ver a previsão.</div>';
+  const contribs=activeContribs();
+  const startY=contribs.length?(parseDate(contribs[0].contribution_date)||new Date()).getFullYear():new Date().getFullYear();
   const endY=venc.getFullYear();
-  for(let y=start.getFullYear();y<=endY;y++){
+  const rows=[];
+  for(let y=startY;y<=endY;y++){
     const at=(y===endY)?new Date(venc):new Date(y,11,31);
-    if(at<start)continue;
-    const p=ipcaProjectAt(cfg,at>venc?venc:at);
-    rows.push({ano:y,at:(at>venc?venc:at),...p});
+    if(at>venc)break;
+    const p=futureProjectAt(at,annualNet,mensal);
+    rows.push({ano:y,at,...p});
   }
-  const head='<tr>'+['Ano','Aportado','Bruto','IR','Líquido','Lucro líq.'].map(h=>
+  const head='<tr>'+['Ano','Investido','Bruto','IR','Líquido','Lucro líq.'].map(h=>
     '<th style="text-align:'+(h==='Ano'?'left':'right')+';padding:7px 9px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em">'+h+'</th>').join('')+'</tr>';
   const body=rows.map(r=>'<tr style="border-top:1px solid var(--b)">'+
     '<td style="padding:7px 9px;font-weight:700">'+r.ano+(r.at.getTime()===venc.getTime()?' <span class="badge bg" style="font-size:9px">venc.</span>':'')+'</td>'+
@@ -1603,21 +1789,19 @@ function ipcaYearTable(cfg,start,venc){
   return '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
 }
 
-/* simulação: aporte mensal atual e +100/+300/+500 até o vencimento */
-function ipcaSimTable(cfg,venc){
-  if(!venc)return '';
+/* simulação: aporte mensal futuro atual e +100/+300/+500 até o vencimento */
+function invSimTable(annualNet,mensal,venc){
+  if(!venc)return '<div style="color:var(--t3);font-size:12px">Defina o vencimento para simular.</div>';
   const extras=[0,100,300,500];
-  const head='<tr>'+['Aporte mensal','Total aportado','Valor líquido','Lucro líquido'].map((h,i)=>
+  const head='<tr>'+['Aporte mensal','Total investido','Valor líquido','Lucro líquido'].map((h,i)=>
     '<th style="text-align:'+(i===0?'left':'right')+';padding:7px 9px;color:var(--t3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em">'+h+'</th>').join('')+'</tr>';
   const body=extras.map(ex=>{
-    const c=Object.assign({},cfg,{mensal:Number(cfg.mensal)+ex});
-    const contribs=ipcaContribs(c);
-    const aportado=contribs.reduce((a,x)=>a+x.amount,0);
-    const p=ipcaProjectAt(c,venc);
+    const m=Number(mensal)+ex;
+    const p=futureProjectAt(venc,annualNet,m);
     const atual=ex===0;
     return '<tr style="border-top:1px solid var(--b)'+(atual?';background:rgba(34,197,94,.05)':'')+'">'+
-      '<td style="padding:7px 9px;font-family:var(--m);font-weight:700;color:'+(atual?'var(--green)':'var(--t1)')+'">'+fmt(c.mensal)+(atual?' <span class="badge bg" style="font-size:9px">atual</span>':'')+'</td>'+
-      '<td style="text-align:right;padding:7px 9px;font-family:var(--m)">'+fmt(aportado)+'</td>'+
+      '<td style="padding:7px 9px;font-family:var(--m);font-weight:700;color:'+(atual?'var(--green)':'var(--t1)')+'">'+fmt(m)+(atual?' <span class="badge bg" style="font-size:9px">atual</span>':'')+'</td>'+
+      '<td style="text-align:right;padding:7px 9px;font-family:var(--m)">'+fmt(p.invested)+'</td>'+
       '<td style="text-align:right;padding:7px 9px;font-family:var(--m);color:var(--indigo);font-weight:700">'+fmt(p.net)+'</td>'+
       '<td style="text-align:right;padding:7px 9px;font-family:var(--m);color:var(--green)">'+fmt(p.netGain)+'</td>'+
       '</tr>';
@@ -1625,21 +1809,23 @@ function ipcaSimTable(cfg,venc){
   return '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>';
 }
 
-/* gráfico de linha: total aportado × valor líquido projetado, ano a ano */
-function drawIpcaChart(cfg,start,venc){
-  const cv=$('ch-ipca');if(!cv||!start||!venc)return;
+/* gráfico: total investido × valor líquido projetado (aportes reais + futuros) */
+function drawInvChart(annualNet,mensal,venc){
+  const cv=$('ch-ipca');if(!cv||!venc)return;
   if(chInv){chInv.destroy();chInv=null}
-  const labels=[],aport=[],liq=[];
+  const contribs=activeContribs();
+  const startY=contribs.length?(parseDate(contribs[0].contribution_date)||new Date()).getFullYear():new Date().getFullYear();
   const endY=venc.getFullYear();
-  for(let y=start.getFullYear();y<=endY;y++){
+  const labels=[],investido=[],liq=[];
+  for(let y=startY;y<=endY;y++){
     const at=(y===endY)?new Date(venc):new Date(y,11,31);
-    if(at<start)continue;
-    const p=ipcaProjectAt(cfg,at>venc?venc:at);
-    labels.push(String(y));aport.push(p.invested);liq.push(p.net);
+    if(at>venc)break;
+    const p=futureProjectAt(at,annualNet,mensal);
+    labels.push(String(y));investido.push(p.invested);liq.push(p.net);
   }
   chInv=new Chart(cv,{type:'line',
     data:{labels,datasets:[
-      {label:'Total aportado',data:aport,borderColor:'#64748b',backgroundColor:'rgba(100,116,139,.1)',borderWidth:2,tension:.3,fill:true,pointRadius:2},
+      {label:'Total investido',data:investido,borderColor:'#64748b',backgroundColor:'rgba(100,116,139,.1)',borderWidth:2,tension:.3,fill:true,pointRadius:2},
       {label:'Valor líquido projetado',data:liq,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.12)',borderWidth:2.5,tension:.3,fill:true,pointRadius:2}
     ]},
     options:{maintainAspectRatio:false,responsive:true,
@@ -1648,6 +1834,69 @@ function drawIpcaChart(cfg,start,venc){
       scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:11}}},
         y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:11},callback:v=>'R$'+(v>=1000?(v/1000).toFixed(0)+'k':v)}}},
       animation:{duration:800,easing:'easeInOutQuart'}}});
+}
+
+/* ── AÇÕES DE APORTE (persistidas no banco) ── */
+function openAddAporte(){
+  const primeiro=activeContribs().length===0;
+  openModal(primeiro?'Aplicação inicial':'Adicionar aporte',
+    '<div class="fr">'+
+      '<div class="fg"><label class="lbl">Valor (R$)</label><input class="inp" type="text" inputmode="decimal" id="ap-v" placeholder="0,00"/></div>'+
+      '<div class="fg"><label class="lbl">Data</label><input class="inp" type="date" id="ap-d" value="'+new Date().toISOString().split('T')[0]+'"/></div></div>'+
+    '<div class="fg"><label class="lbl">Descrição (opcional)</label><input class="inp" type="text" id="ap-n" maxlength="120" placeholder="Ex: aporte mensal"/></div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">'+
+      '<button class="btn btn-o" data-act="closeModal" type="button">Cancelar</button>'+
+      '<button class="btn btn-g" id="save-ap" data-act="saveAporte" type="button">Salvar</button></div>');
+}
+function openEditAporte(id){
+  const c=ST.contribs.find(x=>x.id===id);if(!c){toast('Aporte não encontrado','err');return}
+  openModal('Editar aporte',
+    '<div class="fr">'+
+      '<div class="fg"><label class="lbl">Valor (R$)</label><input class="inp" type="text" inputmode="decimal" id="ap-v" value="'+esc(c.amount)+'"/></div>'+
+      '<div class="fg"><label class="lbl">Data</label><input class="inp" type="date" id="ap-d" value="'+esc(c.contribution_date||new Date().toISOString().split('T')[0])+'"/></div></div>'+
+    '<div class="fg"><label class="lbl">Descrição (opcional)</label><input class="inp" type="text" id="ap-n" maxlength="120" value="'+esc(c.notes||'')+'"/></div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">'+
+      '<button class="btn btn-o" data-act="closeModal" type="button">Cancelar</button>'+
+      '<button class="btn btn-g" id="save-ap" data-act="saveAporte" data-arg="'+esc(id)+'" type="button">Salvar</button></div>');
+}
+async function saveAporte(id){
+  const amount=brNum(val('ap-v')),date=val('ap-d'),notes=val('ap-n');
+  fieldErr('ap-v','');
+  if(amount<=0){fieldErr('ap-v','Informe um valor maior que zero.');return}
+  setBtn('save-ap',true);
+  try{
+    const inv=await ensureActiveInv();
+    if(!inv)throw new Error('investimento indisponível');
+    if(id){
+      const r=await SB.upd('investment_contributions',id,{amount,contribution_date:date||null,notes:notes||null});
+      if(!r||!r[0])throw new Error('não confirmado pelo servidor');
+      const i=ST.contribs.findIndex(x=>x.id===id);if(i>=0)ST.contribs[i]=r[0];
+    }else{
+      const r=await SB.ins('investment_contributions',{investment_id:inv.id,amount,contribution_date:date||null,notes:notes||null,user_id:uid()});
+      if(!r||!r[0]||!r[0].id)throw new Error('não confirmado pelo servidor');
+      ST.contribs.unshift(r[0]);
+    }
+    // mantém amount_invested do investimento coerente (soma dos aportes)
+    const total=activeContribs().reduce((a,c)=>a+Number(c.amount),0);
+    inv.amount_invested=total;
+    SB.upd('investments',inv.id,{amount_invested:total}).catch(()=>{});
+    closeModal();updateIpcaResults();
+  }catch(err){toast('Não foi possível salvar: '+((err&&err.message)||'erro'),'err')}
+  setBtn('save-ap',false,'Salvar');
+}
+async function delAporte(id){
+  const ok=await confirmModal('Excluir aporte','Deseja excluir este aporte? Os cálculos serão atualizados.');
+  if(!ok)return;
+  ldr(true);
+  try{
+    await SB.del('investment_contributions',id);
+    ST.contribs=ST.contribs.filter(c=>c.id!==id);
+    const inv=activeInv();
+    if(inv){const total=activeContribs().reduce((a,c)=>a+Number(c.amount),0);
+      inv.amount_invested=total;SB.upd('investments',inv.id,{amount_invested:total}).catch(()=>{});}
+    updateIpcaResults();
+  }catch(err){toast('Não foi possível excluir: '+((err&&err.message)||'erro'),'err')}
+  ldr(false);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1733,7 +1982,7 @@ async function saveSalary(){
   try{
     const r=await SB.ins('salary_months',{month,year,gross_amount:amount,notes,user_id:uid()});
     if(r?.[0])ST.months.unshift(r[0]);
-    toast('Mês adicionado!');closeModal();renderSalary();
+    toast('Mês adicionado!');closeModal();renderMovAndSalary();
   }catch(err){toast(friendly(err),'err')}
   setBtn('save-sal',false,'Salvar mês');
 }
@@ -1745,7 +1994,7 @@ async function delSalary(id){
     await SB.del('salary_months',id);
     ST.months=ST.months.filter(s=>s.id!==id);
     ST.movs=ST.movs.filter(v=>v.salary_month_id!==id);
-    toast('Mês excluído');renderSalary();
+    toast('Mês excluído');renderMovAndSalary();
   }catch(err){toast(friendly(err),'err')}
   ldr(false);
 }
@@ -1818,8 +2067,7 @@ async function saveMov(id){
       ST.movs.unshift(r[0]);
     }
     closeModal();
-    if(ST.page==='movements')filterMov();
-    else if(ST.page==='salary')renderSalary();
+    if(ST.page==='movements'){filterMov();renderSalary();}
     else renderDash();
   }catch(err){
     // mostra o erro REAL para não mascarar falha de gravação
@@ -1832,7 +2080,7 @@ async function delMov(id){
   if(!ok)return;
   ldr(true);
   try{await SB.del('movements',id);ST.movs=ST.movs.filter(v=>v.id!==id);toast('Excluído');
-    ST.page==='movements'?filterMov():loadPage(ST.page);
+    if(ST.page==='movements'){filterMov();renderSalary();}else loadPage(ST.page);
   }catch(err){toast(friendly(err),'err')}
   ldr(false);
 }
@@ -2063,7 +2311,7 @@ async function onAvatarPicked(ev){
    As ações são despachadas por data-attributes.
 ══════════════════════════════════════════════════════════════ */
 const ACTIONS={openAddSalary,saveSalary,delSalary,openAddMov,openAddMovFor,openEditMov,dupMov,saveMov,delMov,
-  openAddInv,openEditInv,saveInv,delInv,openAddContrib,saveContrib,openAddDebt,openEditDebt,saveDebt,payInst,delDebt,
+  openAddInv,openEditInv,saveInv,delInv,openAddContrib,saveContrib,openAddAporte,openEditAporte,saveAporte,delAporte,openAddDebt,openEditDebt,saveDebt,payInst,delDebt,
   openProfile,saveProfile,changePassword,closeModal};
 
 document.addEventListener('click',e=>{
