@@ -1906,18 +1906,19 @@ function renderInvDetail(invId){
       '</div>'+
     '</div>';
 
-  // ── PROJEÇÃO ATÉ O VENCIMENTO (15/08/2032) ──
-  html+='<div class="sec"><h2>Projeção até o vencimento (15/08/2032)</h2>'+(diasVenc!=null?'<span class="ip-countdown">faltam '+diasVenc+' dias</span>':'')+'</div>'+
-    '<div class="card" style="margin-bottom:16px">'+
-      '<div class="ip-stats" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">'+
-        stat('Total investido (proj.)','<span style="font-family:var(--m)">R$ 351,34</span>','s-neutral')+
-        stat('Valor bruto','<span style="font-family:var(--m)">R$ 752,79</span>','s-indigo')+
-        stat('IR previsto','<span style="font-family:var(--m)">R$ 60,22</span>','s-amber',t.ir?'tabela regressiva':'isento')+
-        stat('Valor líquido','<span style="font-family:var(--m)">R$ 692,57</span>','s-green')+
-        stat('Lucro líquido','<span style="font-family:var(--m)">R$ 341,23</span>','s-green')+
-        stat('Rentab. líquida','97.1%','s-green')+
+  // ── PROJEÇÃO até o vencimento (movida para o topo do dashboard) ──
+  // Seção real e dinâmica: simulador (aporte mensal + horizonte) com os
+  // resultados calculados ao vivo em updateInvSim(). Substitui o antigo
+  // bloco estático que ficava aqui (removido).
+  html+='<div class="sec"><h2>Projeção'+(venc?' até o vencimento ('+venc.toLocaleDateString('pt-BR')+')':' futura')+'</h2>'+(diasVenc!=null?'<span class="ip-countdown">faltam '+diasVenc+' dias</span>':'')+'</div>'+
+    '<div class="card ip-plan" style="margin-bottom:16px">'+
+      '<div class="ip-grid" id="sim-inputs">'+
+        simField('sim-mensal','📅 Aporte mensal (simulação)',proj.mensal||0,'R$')+
+        simField('sim-anos','📆 Horizonte (anos)',proj.anos||(venc?Math.max(1,Math.round((venc-now)/DAY_MS/365)):5),'')+
       '</div>'+
-    '</div>';
+      '<div class="ip-ratehint" id="sim-hint"></div>'+
+    '</div>'+
+    '<div id="sim-results" style="margin-bottom:16px"></div>';
 
   // ── MOVIMENTAÇÕES ──
   // Total investido = soma dinâmica da timeline (inicial + aportes − resgates),
@@ -1935,17 +1936,6 @@ function renderInvDetail(invId){
     (cs.length?'<div style="margin-top:14px;display:flex;flex-direction:column;gap:7px">'+timelineHTML(cs)+'</div>'
       :'<div class="empty" style="padding:26px"><div class="empty-ico">📥</div><h3>Sem movimentações</h3><p>Adicione a aplicação inicial para começar.</p></div>')+
     '</div>';
-
-  // projeção no vencimento + simulador (quando faz sentido ter data final)
-  html+='<div class="sec"><h2>Projeção'+(venc?' até o vencimento ('+venc.toLocaleDateString('pt-BR')+')':' futura')+'</h2></div>'+
-    '<div class="card ip-plan" style="margin-bottom:14px">'+
-      '<div class="ip-grid" id="sim-inputs">'+
-        simField('sim-mensal','📅 Aporte mensal (simulação)',proj.mensal||0,'R$')+
-        simField('sim-anos','📆 Horizonte (anos)',proj.anos||(venc?Math.max(1,Math.round((venc-now)/DAY_MS/365)):5),'')+
-      '</div>'+
-      '<div class="ip-ratehint" id="sim-hint"></div>'+
-    '</div>'+
-    '<div id="sim-results"></div>';
 
   // gráfico
   html+='<div class="card" style="margin-bottom:16px">'+
