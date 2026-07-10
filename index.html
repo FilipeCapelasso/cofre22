@@ -622,6 +622,15 @@ details[open]>summary{color:var(--green)!important}
 .inv-card{transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s}
 .inv-card:hover{transform:translateY(-3px);border-color:var(--bh);box-shadow:0 18px 46px -20px rgba(0,0,0,.7)}
 .inv-card:active{transform:translateY(-1px) scale(.998)}
+
+/* painel de destaque no topo do detalhe (patrimônio/líquido/lucro) */
+.inv-hero-figures{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;
+  padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
+.inv-fig{display:flex;flex-direction:column;gap:2px;min-width:120px;flex:1}
+.inv-fig-lbl{font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.inv-fig-val{font-family:var(--m);font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.5px}
+.inv-fig-sub{font-size:11px;color:var(--t3)}
+@media(max-width:520px){.inv-fig-val{font-size:18px}.inv-fig{min-width:calc(50% - 7px)}}
 </style>
 </head>
 <body>
@@ -1790,14 +1799,9 @@ function renderInvList(){
   const invs=ST.invs.slice();
   // agregados da carteira
   let patrimonio=0,investido=0,liquido=0;
-  const porCat={},porInst={},porTipo={};
   invs.forEach(inv=>{
     const p=projectInv(inv,now);
     patrimonio+=p.gross;investido+=p.invested;liquido+=p.net;
-    const t=invType(inv);
-    porCat[t.cat]=(porCat[t.cat]||0)+p.gross;
-    const inst=inv.institution||'—';porInst[inst]=(porInst[inst]||0)+p.gross;
-    porTipo[t.label]=(porTipo[t.label]||0)+p.gross;
   });
   const lucro=patrimonio-investido;
   const lucroLiq=liquido-investido;
@@ -1832,22 +1836,6 @@ function renderInvList(){
       stat('Rentabilidade média',rentMedia.toFixed(1)+'%','s-green','sobre investido')+
       stat('Ativos',String(invs.length),'s-amber','investimentos')+
     '</div>';
-
-  // distribuições (barras proporcionais)
-  const distBlock=(titulo,obj)=>{
-    const total=Object.values(obj).reduce((a,b)=>a+b,0)||1;
-    const rows=Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v],idx)=>{
-      const cor=['#22c55e','#818cf8','#38bdf8','#f59e0b','#ef4444','#a855f7','#10b981','#f472b6'][idx%8];
-      const p=(v/total*100);
-      return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">'+
-        '<span style="color:var(--t2)">'+esc(k)+'</span><span style="font-family:var(--m);font-weight:600">'+fmt(v)+' · '+p.toFixed(0)+'%</span></div>'+
-        '<div class="prog" style="margin:0"><div class="pf" style="width:'+p+'%;background:'+cor+';box-shadow:0 0 10px '+cor+'"></div></div></div>';
-    }).join('');
-    return '<div class="card" style="margin-bottom:14px"><div class="sec" style="margin-top:0;margin-bottom:12px"><h2>'+titulo+'</h2></div>'+rows+'</div>';
-  };
-  html+='<div class="gch" style="margin-bottom:4px">'+
-    distBlock('Por categoria',porCat)+distBlock('Por instituição',porInst)+'</div>'+
-    distBlock('Por tipo',porTipo);
 
   // lista de cards
   html+='<div class="sec"><h2>Meus investimentos</h2>'+
@@ -1923,34 +1911,44 @@ function renderInvDetail(invId){
           '<button class="btn btn-o btn-sm" data-act="openEditInvFull" data-arg="'+esc(invId)+'" type="button">✎ Editar</button>'+
           '<button class="btn btn-r btn-sm" data-act="delInvFull" data-arg="'+esc(invId)+'" type="button">🗑</button>'+
         '</div>'+
+      '</div>'+
+      // destaque principal: patrimônio + líquido + lucro (recupera dados dos cards removidos)
+      '<div class="inv-hero-figures">'+
+        '<div class="inv-fig"><span class="inv-fig-lbl">Patrimônio (bruto)</span>'+
+          '<span class="inv-fig-val" style="color:'+cor+'">'+fmt(p.gross)+'</span></div>'+
+        '<div class="inv-fig"><span class="inv-fig-lbl">Valor líquido</span>'+
+          '<span class="inv-fig-val">'+fmt(p.net)+'</span>'+
+          '<span class="inv-fig-sub">após IR/IOF</span></div>'+
+        '<div class="inv-fig"><span class="inv-fig-lbl">Lucro líquido</span>'+
+          '<span class="inv-fig-val" style="color:'+(p.netGain>=0?'var(--green)':'var(--red)')+'">'+(p.netGain>=0?'+':'')+fmt(p.netGain)+'</span>'+
+          '<span class="inv-fig-sub">'+(p.invested>0?((p.netGain/p.invested*100)>=0?'+':'')+(p.netGain/p.invested*100).toFixed(2)+'% sobre investido':'')+'</span></div>'+
       '</div></div>';
 
-  // estatísticas atuais
+  // ── SITUAÇÃO ATUAL (agrupada num único card, indicadores enxutos) ──
   html+='<div class="sec"><h2>Situação atual</h2>'+(diasVenc!=null?'<span class="ip-countdown">faltam '+diasVenc+' dias</span>':'')+'</div>'+
-    '<div class="ip-stats" style="margin-bottom:16px">'+
-      stat('Valor bruto',money(p.gross),'s-indigo','patrimônio hoje')+
-      stat('Valor investido',money(p.invested),'s-neutral','capital aportado')+
-      stat('Valor líquido',money(p.net),'s-green','após IR/IOF')+
-      stat('Lucro',money(p.gain),p.gain>=0?'s-green':'s-red','bruto')+
-      stat('Lucro líquido',money(p.netGain),p.netGain>=0?'s-green':'s-red','após impostos')+
-      stat('IR previsto',money(p.ir),'s-amber',t.ir?'tabela regressiva':'isento')+
-      (p.iof>0?stat('IOF',money(p.iof),'s-amber','resgate < 30 dias'):'')+
-      stat('Rentab. acumulada',rentAcum.toFixed(2)+'%','s-green','desde o início')+
-      stat('Rentab. anualizada',rentAA.toFixed(2)+'%','s-green','a.a. (CAGR)')+
-      stat('Rendimento diário',money(rDia),'s-green','estimado')+
-      stat('Rendimento mensal',money(rMes),'s-green','estimado')+
+    '<div class="card" style="margin-bottom:16px">'+
+      '<div class="ip-stats" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">'+
+        stat('IR previsto',money(p.ir),'s-amber',t.ir?'tabela regressiva':'isento')+
+        (p.iof>0?stat('IOF',money(p.iof),'s-amber','resgate < 30 dias'):'')+
+        stat('Rentab. acumulada',rentAcum.toFixed(2)+'%','s-green','desde o início')+
+        stat('Rentab. anualizada',rentAA.toFixed(2)+'%','s-green','a.a. (CAGR)')+
+        stat('Rendimento diário',money(rDia),'s-green','estimado')+
+        stat('Rendimento mensal',money(rMes),'s-green','estimado')+
+      '</div>'+
     '</div>';
 
-  // card de aportes/movimentações
-  const invested=p.invested;
+  // ── MOVIMENTAÇÕES ──
+  // Total investido = soma dinâmica da timeline (inicial + aportes − resgates),
+  // recalculada a cada render a partir da lista visível abaixo.
+  const invested=cs.reduce((a,c)=>isPrincipal(c.movement_type)?a+Number(c.amount)*flowSign(c.movement_type):a,0);
   const nAportes=cs.filter(c=>isPrincipal(c.movement_type)).length;
   html+='<div class="sec"><h2>Movimentações</h2>'+
     '<button class="btn btn-g btn-sm" data-act="openAddMovInv" data-arg="'+esc(invId)+'" type="button">+ Nova movimentação</button></div>'+
     '<div class="card" style="margin-bottom:16px">'+
     '<div class="ip-stats" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'+
-      stat('Total investido',fmt(invested),'s-neutral')+
+      stat('Total investido',money(Math.max(invested,0)),'s-green','patrimônio atual '+fmt(p.gross))+
       stat('Movimentações',String(cs.length),'s-indigo')+
-      stat('Aportes',String(nAportes),'s-green')+
+      stat('Aportes',String(nAportes),'s-neutral')+
     '</div>'+
     (cs.length?'<div style="margin-top:14px;display:flex;flex-direction:column;gap:7px">'+timelineHTML(cs)+'</div>'
       :'<div class="empty" style="padding:26px"><div class="empty-ico">📥</div><h3>Sem movimentações</h3><p>Adicione a aplicação inicial para começar.</p></div>')+
