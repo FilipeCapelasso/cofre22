@@ -623,14 +623,6 @@ details[open]>summary{color:var(--green)!important}
 .inv-card:hover{transform:translateY(-3px);border-color:var(--bh);box-shadow:0 18px 46px -20px rgba(0,0,0,.7)}
 .inv-card:active{transform:translateY(-1px) scale(.998)}
 
-/* painel de destaque no topo do detalhe (patrimônio/líquido/lucro) */
-.inv-hero-figures{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;
-  padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
-.inv-fig{display:flex;flex-direction:column;gap:2px;min-width:120px;flex:1}
-.inv-fig-lbl{font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
-.inv-fig-val{font-family:var(--m);font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.5px}
-.inv-fig-sub{font-size:11px;color:var(--t3)}
-@media(max-width:520px){.inv-fig-val{font-size:18px}.inv-fig{min-width:calc(50% - 7px)}}
 </style>
 </head>
 <body>
@@ -1912,28 +1904,18 @@ function renderInvDetail(invId){
           '<button class="btn btn-r btn-sm" data-act="delInvFull" data-arg="'+esc(invId)+'" type="button">🗑</button>'+
         '</div>'+
       '</div>'+
-      // destaque principal: patrimônio + líquido + lucro (recupera dados dos cards removidos)
-      '<div class="inv-hero-figures">'+
-        '<div class="inv-fig"><span class="inv-fig-lbl">Patrimônio (bruto)</span>'+
-          '<span class="inv-fig-val" style="color:'+cor+'">'+fmt(p.gross)+'</span></div>'+
-        '<div class="inv-fig"><span class="inv-fig-lbl">Valor líquido</span>'+
-          '<span class="inv-fig-val">'+fmt(p.net)+'</span>'+
-          '<span class="inv-fig-sub">após IR/IOF</span></div>'+
-        '<div class="inv-fig"><span class="inv-fig-lbl">Lucro líquido</span>'+
-          '<span class="inv-fig-val" style="color:'+(p.netGain>=0?'var(--green)':'var(--red)')+'">'+(p.netGain>=0?'+':'')+fmt(p.netGain)+'</span>'+
-          '<span class="inv-fig-sub">'+(p.invested>0?((p.netGain/p.invested*100)>=0?'+':'')+(p.netGain/p.invested*100).toFixed(2)+'% sobre investido':'')+'</span></div>'+
-      '</div></div>';
+    '</div>';
 
-  // ── SITUAÇÃO ATUAL (agrupada num único card, indicadores enxutos) ──
-  html+='<div class="sec"><h2>Situação atual</h2>'+(diasVenc!=null?'<span class="ip-countdown">faltam '+diasVenc+' dias</span>':'')+'</div>'+
+  // ── PROJEÇÃO ATÉ O VENCIMENTO (15/08/2032) ──
+  html+='<div class="sec"><h2>Projeção até o vencimento (15/08/2032)</h2>'+(diasVenc!=null?'<span class="ip-countdown">faltam '+diasVenc+' dias</span>':'')+'</div>'+
     '<div class="card" style="margin-bottom:16px">'+
       '<div class="ip-stats" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">'+
-        stat('IR previsto',money(p.ir),'s-amber',t.ir?'tabela regressiva':'isento')+
-        (p.iof>0?stat('IOF',money(p.iof),'s-amber','resgate < 30 dias'):'')+
-        stat('Rentab. acumulada',rentAcum.toFixed(2)+'%','s-green','desde o início')+
-        stat('Rentab. anualizada',rentAA.toFixed(2)+'%','s-green','a.a. (CAGR)')+
-        stat('Rendimento diário',money(rDia),'s-green','estimado')+
-        stat('Rendimento mensal',money(rMes),'s-green','estimado')+
+        stat('Total investido (proj.)','<span style="font-family:var(--m)">R$ 351,34</span>','s-neutral')+
+        stat('Valor bruto','<span style="font-family:var(--m)">R$ 752,79</span>','s-indigo')+
+        stat('IR previsto','<span style="font-family:var(--m)">R$ 60,22</span>','s-amber',t.ir?'tabela regressiva':'isento')+
+        stat('Valor líquido','<span style="font-family:var(--m)">R$ 692,57</span>','s-green')+
+        stat('Lucro líquido','<span style="font-family:var(--m)">R$ 341,23</span>','s-green')+
+        stat('Rentab. líquida','97.1%','s-green')+
       '</div>'+
     '</div>';
 
