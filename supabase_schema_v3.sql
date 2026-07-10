@@ -1,12 +1,13 @@
 -- ═══════════════════════════════════════════════════════════════
---  FinanceFlow — Esquema de banco de dados (Supabase / PostgreSQL)
+--  FinanceFlow — ESQUEMA DEFINITIVO UNIFICADO (Supabase / PostgreSQL)
 --
---  100% IDEMPOTENTE. Pode ser executado quantas vezes forem
---  necessárias sem gerar erro de "já existe" (inclui o erro
---  42710 "policy already exists" que ocorria na versão anterior).
+--  Reúne o schema base + a migração do Gerenciador de Investimentos v2
+--  num único arquivo. 100% IDEMPOTENTE: pode rodar quantas vezes quiser
+--  sem erro (inclusive o 42710 "policy already exists").
 --
 --  Estratégia de idempotência:
 --    • Tabelas / índices ...... CREATE ... IF NOT EXISTS
+--    • Colunas novas .......... ADD COLUMN IF NOT EXISTS
 --    • Constraints ............ verificação em pg_constraint
 --    • Policies ............... DROP POLICY IF EXISTS + CREATE
 --    • Funções / views ........ CREATE OR REPLACE
@@ -94,7 +95,7 @@ BEGIN
 END $$;
 
 -- ──────────────────────────────────────────────────────────────
--- 3. TABELA: investments
+-- 3. TABELA: investments  (já com todos os campos do gerenciador v2)
 -- ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.investments (
     id               UUID          DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -109,6 +110,26 @@ CREATE TABLE IF NOT EXISTS public.investments (
     purchase_date    DATE,
     created_at       TIMESTAMPTZ   DEFAULT NOW()
 );
+
+-- Campos do Gerenciador de Investimentos v2 (aditivos e opcionais).
+-- Presentes aqui para instalações novas; o ADD COLUMN IF NOT EXISTS
+-- garante que bancos antigos também recebam as colunas.
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS kind          TEXT;          -- selic, ipca, prefixado, nubank, mercadopago, cdb, lci, lca, cdi, fii, etf, acoes, poupanca, outro
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS institution   TEXT;          -- instituição (ex: Nubank, XP)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS category      TEXT;          -- categoria (renda fixa, variável, etc.)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS description   TEXT;          -- descrição livre
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS maturity_date DATE;          -- vencimento (quando existir)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS ipca_rate     NUMERIC(10,4); -- IPCA estimado (% a.a.)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS cdi_rate      NUMERIC(10,4); -- CDI de referência (% a.a.)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS selic_rate    NUMERIC(10,4); -- Selic de referência (% a.a.)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS cdi_percent   NUMERIC(10,4); -- % do CDI (ex: 110 = 110% CDI)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS currency      TEXT DEFAULT 'BRL';
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS color         TEXT;          -- cor (hex)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS icon          TEXT;          -- emoji/ícone
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS image_url     TEXT;          -- imagem opcional
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS notes         TEXT;          -- observações
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS monthly_goal  NUMERIC(12,2); -- aporte mensal planejado (projeção)
+ALTER TABLE public.investments ADD COLUMN IF NOT EXISTS updated_at    TIMESTAMPTZ DEFAULT NOW();
 
 DO $$
 BEGIN
@@ -177,31 +198,52 @@ BEGIN
     END IF;
 END $$;
 
--- ═══════════════════════════════════════════════════════════════
--- ROW LEVEL SECURITY (RLS)
---
--- Todas as tabelas isolam dados por auth.uid() = user_id.
--- Nenhum usuário consegue ler/gravar dados de outro.
---
--- IDEMPOTÊNCIA: usamos DROP POLICY IF EXISTS antes de cada CREATE.
--- Isto resolve definitivamente o erro 42710.
--- ═══════════════════════════════════════════════════════════════
-ALTER TABLE public.profiles        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.salary_months   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.movements       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.investments     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.debts           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.debt_payments   ENABLE ROW LEVEL SECURITY;
+-- ══════════════════════════════════════════════════════════════
+-- 6. TABELA: investment_contributions  (movimentações do investimento)
+--    aportes, resgates, rendimentos, correções, transferências.
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.investment_contributions (
+    id                UUID          DEFAULT gen_random_uuid() PRIMARY KEY,
+    investment_id     UUID          NOT NULL REFERENCES public.investments(id) ON DELETE CASCADE,
+    user_id           UUID          NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    amount            NUMERIC(12,2) NOT NULL,
+    contribution_date DATE          DEFAULT CURRENT_DATE,
+    movement_type     TEXT          DEFAULT 'aporte',   -- inicial, aporte, resgate, rendimento, correcao, transferencia
+    description       TEXT,
+    notes             TEXT,
+    created_at        TIMESTAMPTZ   DEFAULT NOW()
+);
 
--- profiles: o usuário só enxerga e edita o próprio perfil
+-- garante as colunas v2 em bancos antigos
+ALTER TABLE public.investment_contributions ADD COLUMN IF NOT EXISTS movement_type TEXT DEFAULT 'aporte';
+ALTER TABLE public.investment_contributions ADD COLUMN IF NOT EXISTS description   TEXT;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'inv_contrib_amount_check') THEN
+        ALTER TABLE public.investment_contributions
+            ADD CONSTRAINT inv_contrib_amount_check CHECK (amount >= 0);
+    END IF;
+END $$;
+
+-- ═══════════════════════════════════════════════════════════════
+-- ROW LEVEL SECURITY (RLS) — isola tudo por auth.uid() = user_id
+-- ═══════════════════════════════════════════════════════════════
+ALTER TABLE public.profiles                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.salary_months               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.movements                   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investments                 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.debts                       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.debt_payments               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_contributions    ENABLE ROW LEVEL SECURITY;
+
+-- profiles
 DROP POLICY IF EXISTS "profiles_select_own" ON public.profiles;
 CREATE POLICY "profiles_select_own" ON public.profiles
     FOR SELECT USING (auth.uid() = id);
-
 DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
 CREATE POLICY "profiles_insert_own" ON public.profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
-
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_update_own" ON public.profiles
     FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
@@ -231,6 +273,11 @@ DROP POLICY IF EXISTS "debt_payments_all_own" ON public.debt_payments;
 CREATE POLICY "debt_payments_all_own" ON public.debt_payments
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+-- investment_contributions
+DROP POLICY IF EXISTS "inv_contrib_all_own" ON public.investment_contributions;
+CREATE POLICY "inv_contrib_all_own" ON public.investment_contributions
+    FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
 -- ═══════════════════════════════════════════════════════════════
 -- ÍNDICES
 -- ═══════════════════════════════════════════════════════════════
@@ -244,10 +291,16 @@ CREATE INDEX IF NOT EXISTS idx_movements_created
     ON public.movements(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_investments_user
     ON public.investments(user_id);
+CREATE INDEX IF NOT EXISTS idx_investments_kind
+    ON public.investments(user_id, kind);
 CREATE INDEX IF NOT EXISTS idx_debts_user
     ON public.debts(user_id);
 CREATE INDEX IF NOT EXISTS idx_debt_payments_debt
     ON public.debt_payments(debt_id);
+CREATE INDEX IF NOT EXISTS idx_inv_contrib_inv
+    ON public.investment_contributions(investment_id, contribution_date DESC);
+CREATE INDEX IF NOT EXISTS idx_inv_contrib_user
+    ON public.investment_contributions(user_id);
 
 -- ═══════════════════════════════════════════════════════════════
 -- FUNÇÃO: preenche user_id automaticamente se vier nulo
@@ -288,9 +341,13 @@ CREATE TRIGGER trg_debt_payments_uid
     BEFORE INSERT ON public.debt_payments
     FOR EACH ROW EXECUTE FUNCTION public.set_user_id();
 
+DROP TRIGGER IF EXISTS trg_inv_contrib_uid ON public.investment_contributions;
+CREATE TRIGGER trg_inv_contrib_uid
+    BEFORE INSERT ON public.investment_contributions
+    FOR EACH ROW EXECUTE FUNCTION public.set_user_id();
+
 -- ═══════════════════════════════════════════════════════════════
 -- FUNÇÃO + TRIGGER: cria o profile automaticamente no cadastro
--- (chamado quando um novo usuário é inserido em auth.users)
 -- ═══════════════════════════════════════════════════════════════
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
@@ -315,7 +372,7 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ═══════════════════════════════════════════════════════════════
--- FUNÇÃO + TRIGGER: mantém profiles.updated_at
+-- FUNÇÃO + TRIGGERS: mantém updated_at atualizado
 -- ═══════════════════════════════════════════════════════════════
 CREATE OR REPLACE FUNCTION public.touch_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -330,9 +387,13 @@ CREATE TRIGGER trg_profiles_touch
     BEFORE UPDATE ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
+DROP TRIGGER IF EXISTS trg_investments_touch ON public.investments;
+CREATE TRIGGER trg_investments_touch
+    BEFORE UPDATE ON public.investments
+    FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
 -- ═══════════════════════════════════════════════════════════════
--- BACKFILL: cria profile para usuários que já existiam antes deste
--- script (evita perfil faltando em contas antigas).
+-- BACKFILL: profile para usuários que já existiam antes do script
 -- ═══════════════════════════════════════════════════════════════
 INSERT INTO public.profiles (id, full_name)
 SELECT u.id, COALESCE(u.raw_user_meta_data->>'name', split_part(u.email, '@', 1))
@@ -341,8 +402,65 @@ LEFT JOIN public.profiles p ON p.id = u.id
 WHERE p.id IS NULL;
 
 -- ═══════════════════════════════════════════════════════════════
--- VIEW: resumo_mensal  (agregado por mês, respeitando RLS via
--- security_invoker para não vazar dados entre usuários)
+-- MIGRAÇÃO DE DADOS (não destrutiva) — Investimentos v2
+--   Preenche kind/maturity_date/description a partir do campo
+--   product legado ("|venc:AAAA-MM-DD"). Só toca em quem falta kind.
+-- ═══════════════════════════════════════════════════════════════
+UPDATE public.investments
+SET
+    maturity_date = COALESCE(
+        maturity_date,
+        NULLIF(substring(product FROM '\|venc:(\d{4}-\d{2}-\d{2})'), '')::date
+    ),
+    kind = COALESCE(
+        kind,
+        CASE
+            WHEN product ILIKE '%prefix%'                               THEN 'prefixado'
+            WHEN product ILIKE '%selic%'                                THEN 'selic'
+            WHEN product ILIKE '%ipca%'  OR product ILIKE '%inflaç%'    THEN 'ipca'
+            WHEN product ILIKE '%nubank%' OR product ILIKE '%caixinha%' THEN 'nubank'
+            WHEN product ILIKE '%mercado%'                             THEN 'mercadopago'
+            WHEN product ILIKE '%cdb%'                                 THEN 'cdb'
+            WHEN product ILIKE '%lci%'                                 THEN 'lci'
+            WHEN product ILIKE '%lca%'                                 THEN 'lca'
+            WHEN product ILIKE '%fii%'  OR product ILIKE '%imobili%'   THEN 'fii'
+            WHEN product ILIKE '%etf%'                                 THEN 'etf'
+            WHEN product ILIKE '%aç%'   OR product ILIKE '%acao%'
+                                        OR product ILIKE '%ações%'     THEN 'acoes'
+            WHEN product ILIKE '%poupan%'                             THEN 'poupanca'
+            ELSE 'ipca'   -- padrão do investimento legado (era IPCA+)
+        END
+    )
+WHERE kind IS NULL;
+
+UPDATE public.investments
+SET description = COALESCE(description, regexp_replace(product, '\s*\|venc:\d{4}-\d{2}-\d{2}', '', 'g'))
+WHERE description IS NULL AND product IS NOT NULL;
+
+-- ═══════════════════════════════════════════════════════════════
+-- BACKFILL: aporte inicial para investimentos sem nenhuma
+-- movimentação registrada (usa amount_invested + purchase_date).
+-- ═══════════════════════════════════════════════════════════════
+INSERT INTO public.investment_contributions (investment_id, user_id, amount, contribution_date, movement_type, notes)
+SELECT i.id, i.user_id, i.amount_invested,
+       COALESCE(i.purchase_date, i.created_at::date), 'inicial', 'Aporte inicial'
+FROM public.investments i
+LEFT JOIN public.investment_contributions c ON c.investment_id = i.id
+WHERE c.id IS NULL AND i.amount_invested > 0;
+
+-- marca o 1º aporte de cada investimento como 'inicial' (quando ainda 'aporte')
+UPDATE public.investment_contributions c
+SET movement_type = 'inicial'
+WHERE movement_type = 'aporte'
+  AND c.id = (
+      SELECT c2.id FROM public.investment_contributions c2
+      WHERE c2.investment_id = c.investment_id
+      ORDER BY c2.contribution_date ASC, c2.created_at ASC
+      LIMIT 1
+  );
+
+-- ═══════════════════════════════════════════════════════════════
+-- VIEW: resumo_mensal  (agregado por mês, respeita RLS)
 -- ═══════════════════════════════════════════════════════════════
 CREATE OR REPLACE VIEW public.resumo_mensal
 WITH (security_invoker = true) AS
@@ -362,13 +480,12 @@ LEFT JOIN public.movements m ON m.salary_month_id = sm.id
 GROUP BY sm.user_id, sm.id, sm.month, sm.year, sm.gross_amount;
 
 -- ═══════════════════════════════════════════════════════════════
--- STORAGE: bucket de avatares (para troca de foto de perfil)
+-- STORAGE: bucket de avatares (troca de foto de perfil)
 -- ═══════════════════════════════════════════════════════════════
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('avatars', 'avatars', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Cada usuário só grava/atualiza/apaga a própria pasta:  {uid}/arquivo
 DROP POLICY IF EXISTS "avatars_public_read" ON storage.objects;
 CREATE POLICY "avatars_public_read" ON storage.objects
     FOR SELECT USING (bucket_id = 'avatars');
@@ -394,64 +511,13 @@ CREATE POLICY "avatars_delete_own" ON storage.objects
         AND auth.uid()::text = (storage.foldername(name))[1]
     );
 
--- ══════════════════════════════════════════════════════════════
--- 6. TABELA: investment_contributions  (histórico de aportes)
---    Relaciona-se ao investimento sem alterar a tabela existente.
---    Cada linha é um aporte: valor, data e observação.
--- ══════════════════════════════════════════════════════════════
-CREATE TABLE IF NOT EXISTS public.investment_contributions (
-    id                UUID          DEFAULT gen_random_uuid() PRIMARY KEY,
-    investment_id     UUID          NOT NULL REFERENCES public.investments(id) ON DELETE CASCADE,
-    user_id           UUID          NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    amount            NUMERIC(12,2) NOT NULL,
-    contribution_date DATE          DEFAULT CURRENT_DATE,
-    notes             TEXT,
-    created_at        TIMESTAMPTZ   DEFAULT NOW()
-);
-
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'inv_contrib_amount_check') THEN
-        ALTER TABLE public.investment_contributions
-            ADD CONSTRAINT inv_contrib_amount_check CHECK (amount >= 0);
-    END IF;
-END $$;
-
-ALTER TABLE public.investment_contributions ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "inv_contrib_all_own" ON public.investment_contributions;
-CREATE POLICY "inv_contrib_all_own" ON public.investment_contributions
-    FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
-CREATE INDEX IF NOT EXISTS idx_inv_contrib_inv
-    ON public.investment_contributions(investment_id, contribution_date DESC);
-CREATE INDEX IF NOT EXISTS idx_inv_contrib_user
-    ON public.investment_contributions(user_id);
-
-DROP TRIGGER IF EXISTS trg_inv_contrib_uid ON public.investment_contributions;
-CREATE TRIGGER trg_inv_contrib_uid
-    BEFORE INSERT ON public.investment_contributions
-    FOR EACH ROW EXECUTE FUNCTION public.set_user_id();
-
--- Backfill opcional: cria o "aporte inicial" para investimentos que já
--- existiam antes desta atualização e ainda não têm nenhum aporte
--- registrado, usando o valor já aportado e a data de compra. Assim o
--- histórico fica coerente sem alterar os cálculos atuais.
-INSERT INTO public.investment_contributions (investment_id, user_id, amount, contribution_date, notes)
-SELECT i.id, i.user_id, i.amount_invested,
-       COALESCE(i.purchase_date, i.created_at::date), 'Aporte inicial'
-FROM public.investments i
-LEFT JOIN public.investment_contributions c ON c.investment_id = i.id
-WHERE c.id IS NULL AND i.amount_invested > 0;
-
 -- ═══════════════════════════════════════════════════════════════
--- PRONTO. Script seguro para reexecução ilimitada.
+-- PRONTO. Script único, definitivo e seguro para reexecução.
 --
 -- Observações:
---  • Para o usuário entrar imediatamente após o cadastro (sem
---    confirmar e-mail): Authentication → Providers → Email →
---    desmarque "Confirm email".
---  • Para o link de recuperação de senha voltar para o app:
+--  • Login imediato após cadastro (sem confirmar e-mail):
+--    Authentication → Providers → Email → desmarque "Confirm email".
+--  • Recuperação de senha voltar para o app:
 --    Authentication → URL Configuration → adicione a URL do site
 --    em "Redirect URLs".
 -- ═══════════════════════════════════════════════════════════════
